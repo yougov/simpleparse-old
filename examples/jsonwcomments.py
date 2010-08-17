@@ -2,6 +2,7 @@
 from simpleparse.common import numbers, strings, comments
 
 declaration = r'''
+>file<      := ts,(object,sep)+
 object    := ts,'{',!,ts,(member,sep?)*,'}'
 
 member    := string,ts,':',ts,value,ts
@@ -50,10 +51,19 @@ class Processor( DispatchProcessor ):
     def null( self, tag, buffer ):
         return None
 
+parser = Parser( declaration, "file" )
 
-parser = Parser( declaration, "object" )
+def loads( json ):
+    result = parser.parse( json, processor = Processor() )
+    if result[-1] != len(json):
+        raise ValueError( "Unable to complete parsing: %r"%( json) )
+    return result[1][0]
+
 if __name__ =="__main__":
-    import sys,json
+    import sys,json,pprint
     print json.dumps(
-        parser.parse( open(sys.argv[1]).read(), processor=Processor())
+        parser.parse(
+            open(sys.argv[1]).read(),
+            processor=Processor()
+        )[1][0]
     )
