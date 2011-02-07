@@ -292,3 +292,4 @@ class FirstOfGroup( Group ):
             except NoMatch, err:
                 pass
         raise NoMatch( self, state )
+
