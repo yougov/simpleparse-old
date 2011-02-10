@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import unittest
 import mx_test, test_objectgenerator, test_simpleparsegrammar
 import test_common_chartypes, test_common_numbers
@@ -18,7 +19,7 @@ mxVersion = mxVersion[:3]
 def getSuite():
     set = []
     for module in [
-        mx_test,
+        #mx_test,
         test_objectgenerator,
         test_simpleparsegrammar,
         test_common_chartypes,

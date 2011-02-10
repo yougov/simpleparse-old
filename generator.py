@@ -50,8 +50,8 @@ class Generator:
             self.rootObjects.append( rootElement )
             return self.getNameIndex( name )
     def buildParser( self, name, methodSource=None ):
-        '''Build the given parser definition, returning a TextTools parsing tuple'''
-        self.parserList = []
+        '''Build the given parser definition, returning a Parser object'''
+        self.parserList = {}
         self.terminalParserCache = {}
         self.methodSource = methodSource
         i = 0
@@ -61,7 +61,7 @@ class Generator:
             rootObject = self.rootObjects[i]
             try:
                 if len(self.parserList) <= i or self.parserList[i] is None:
-                    parser = tuple(rootObject.toParser( self ))
+                    parser = rootObject.to_parser( self )
                     self.setTerminalParser( i, parser )
             except NameError,err:
                 currentRuleName = self.names[i]
@@ -70,11 +70,9 @@ class Generator:
             i = i + 1
         assert None not in self.parserList, str( self.parserList)
         return self.parserList [self.getNameIndex (name)]
-    def setTerminalParser( self, index, parser ):
+    def setTerminalParser( self, name, parser ):
         """Explicitly set the parser value for given name"""
-        while index >= len(self.parserList):
-            self.parserList.append(None)
-        self.parserList[index] = parser
+        self.parserList[name] = parser
     def getTerminalParser( self, index ):
         """Try to retrieve a parser from the parser-list"""
         try:
