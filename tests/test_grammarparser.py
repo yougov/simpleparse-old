@@ -5,20 +5,17 @@ import unittest, pprint
 from simpleparse.simpleparsegrammar import SPGenerator, declaration
 from simpleparse.parser import Parser
 from simpleparse.error import ParserSyntaxError
-from simpleparse.stt.TextTools import TextTools
 from genericvalues import NullResult, AnyInt
-
-from simpleparse.stt.TextTools import print_tagtable
-print_tagtable(
-    SPGenerator.buildParser( 'range' )
-)
 
 
 class SimpleParseGrammarTests(unittest.TestCase):
     """Test parsing of the the simpleparse grammar elements"""
     def doBasicTest(self, parserName, testValue, expected, ):
         parser = SPGenerator.buildParser( parserName )
-        result = TextTools.tag( testValue, parser )
+        result = parser( testValue )
+        import pprint 
+        import pdb 
+        pdb.set_trace()
         assert result == expected, '''\nexpected:%s\n     got:%s\n'''%( expected, result )
     def testChar1( self ):
         self.doBasicTest(
@@ -87,11 +84,20 @@ class SimpleParseGrammarTests(unittest.TestCase):
             'a-z',
             (1, [('CHAR', 0, 1, NullResult)], 1),
         )
+    def testChar( self ):
+        self.doBasicTest(
+            "CHAR",
+            'a',
+            (1, [], 1),
+        )
     def testCharRange1( self ):
         self.doBasicTest(
             "CHARRANGE",
             'a-z',
-            (1, [('CHARNOBRACE', 0, 1, [('CHAR', 0, 1, NullResult)]),('CHARNOBRACE', 2, 3, [('CHAR', 2, 3, NullResult)])], 3),
+            (1, [
+                ('CHARNOBRACE', 0, 1, [('CHAR', 0, 1, NullResult)]),
+                ('CHARNOBRACE', 2, 3, [('CHAR', 2, 3, NullResult)]),
+            ], 3),
         )
     def testRange1( self ):
         self.doBasicTest(
@@ -838,13 +844,13 @@ class SimpleParseGrammarTests(unittest.TestCase):
                 ]),
             ], 21)
         )
-    def testDeclarationSet2( self ):
-        '''Just tries to parse and sees that everything was parsed, doesn't predict the result'''
-        parser = SPGenerator.buildParser( "declarationset" )
-        result = TextTools.tag( declaration, parser )
-        assert result[-1] == len(declaration), '''Didn't complete parse of the simpleparse declaration, only got %s chars, should have %s'''%(result[-1], len(declaration))
+#    def testDeclarationSet2( self ):
+#        '''Just tries to parse and sees that everything was parsed, doesn't predict the result'''
+#        parser = SPGenerator.buildParser( "declarationset" )
+#        result = TextTools.tag( declaration, parser )
+#        assert result[-1] == len(declaration), '''Didn't complete parse of the simpleparse declaration, only got %s chars, should have %s'''%(result[-1], len(declaration))
 
-recursiveParser = Parser(declaration)
+#recursiveParser = Parser(declaration)
 
 class SimpleParseRecursiveTests(SimpleParseGrammarTests):
     """Test parsing of grammar elements with generated version of simpleparse grammar"""
@@ -855,7 +861,7 @@ class SimpleParseRecursiveTests(SimpleParseGrammarTests):
 def getSuite():
     return unittest.TestSuite((
         unittest.makeSuite(SimpleParseGrammarTests,'test'),
-        unittest.makeSuite(SimpleParseRecursiveTests,'test'),
+#        unittest.makeSuite(SimpleParseRecursiveTests,'test'),
     ))
 
 if __name__ == "__main__":

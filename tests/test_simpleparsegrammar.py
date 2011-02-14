@@ -1,7 +1,15 @@
 import unittest, pprint
 from simpleparse.parser import Parser
-from simpleparse.stt.TextTools import TextTools
 from genericvalues import NullResult, AnyInt
+from simpleparse.simpleparsegrammar import SPGenerator
+        
+class GrammarTests( unittest.TestCase ):
+    """Test productions of the simpleparse grammar itself"""
+    def test_declaration( self ):
+        source = "s := 'b'"
+        (success,children,next) = SPGenerator.buildParser( 'declaration' )( source )
+        assert success 
+        assert next == len(source), (source[:next], source[next:])
         
 class ParserGenerationTests(unittest.TestCase):
     def doBasicTest(self, definition, parserName, testValue, expected, ):
@@ -441,69 +449,69 @@ class NameTests(unittest.TestCase):
                 ('r',0,1, NullResult),
             ],1)
         )
-
-class BasicMethodSource:
-    def __init__( self ):
-        self.results = []
-    def _m_a( self, taglist,text,l,r,subtags ):
-        self.results.append( ('a',text[l:r]))
-    def _m_b( self, taglist, text, l,r,subtags):
-        self.results.append( ('b',l,r) )
-    _m_c = TextTools.AppendMatch
-    _m_d = TextTools.AppendTagobj
-    _o_d = "hello world"
-class AppendToTagobjMethodSource:
-    def __init__( self ):
-        self._o_d = []
-    _m_d = TextTools.AppendToTagobj
-
-class CallTests(unittest.TestCase):
-    """Tests semantics of calling objects from a method source during parsing"""
-    def parse( self, definition, parserName, testValue, source):
-        result = Parser(
-            definition,
-        ).parse(testValue, production=parserName, processor = source)
-        return result
-    def test_basic_call( self ):
-        """Test basic ability to call a method instead of regular functioning"""
-        source = BasicMethodSource()
-        self.parse( """
-            x := (a/b)*
-            a := "a"
-            b := "b"
-        """, 'x', 'abba', source)
-        assert source.results == [ ('a','a'),('b',1,2),('b',2,3),('a','a'),], """Method source methods were not called, or called improperly:\n%s"""%(source.results,)
-        
-    def test_AppendMatch( self ):
-        """Test ability to append the text-string match to the results list"""
-        source = BasicMethodSource()
-        result = self.parse( """
-            x := c*
-            c := 'c'
-        """, 'x', 'ccc', source)
-        assert result == (1,[
-            'c','c','c',
-        ],3), """Result was %s"""%( result, )
-        
-    def test_AppendTagObj( self ):
-        """Test appending the tagobject to the results list"""
-        source = BasicMethodSource()
-        result = self.parse( """
-            x := d*
-            d := 'd'
-        """, 'x', 'ddd', source)
-        assert result == (1,[
-            "hello world","hello world","hello world",
-        ],3)
-
-    def test_AppendToTagObj( self ):
-        """Test basic ability to call a method instead of regular functioning"""
-        source = AppendToTagobjMethodSource()
-        result = self.parse( """
-            x := d*
-            d := 'd'
-        """, 'x', 'ddd', source)
-        assert source._o_d == [ (None,0,1,NullResult),(None,1,2,NullResult),(None,2,3,NullResult)], """Method source methods were not called, or called improperly:\n%s"""%(source._o_d,)
+#
+#class BasicMethodSource:
+#    def __init__( self ):
+#        self.results = []
+#    def _m_a( self, taglist,text,l,r,subtags ):
+#        self.results.append( ('a',text[l:r]))
+#    def _m_b( self, taglist, text, l,r,subtags):
+#        self.results.append( ('b',l,r) )
+#    _m_c = TextTools.AppendMatch
+#    _m_d = TextTools.AppendTagobj
+#    _o_d = "hello world"
+#class AppendToTagobjMethodSource:
+#    def __init__( self ):
+#        self._o_d = []
+#    _m_d = TextTools.AppendToTagobj
+#
+#class CallTests(unittest.TestCase):
+#    """Tests semantics of calling objects from a method source during parsing"""
+#    def parse( self, definition, parserName, testValue, source):
+#        result = Parser(
+#            definition,
+#        ).parse(testValue, production=parserName, processor = source)
+#        return result
+#    def test_basic_call( self ):
+#        """Test basic ability to call a method instead of regular functioning"""
+#        source = BasicMethodSource()
+#        self.parse( """
+#            x := (a/b)*
+#            a := "a"
+#            b := "b"
+#        """, 'x', 'abba', source)
+#        assert source.results == [ ('a','a'),('b',1,2),('b',2,3),('a','a'),], """Method source methods were not called, or called improperly:\n%s"""%(source.results,)
+#        
+#    def test_AppendMatch( self ):
+#        """Test ability to append the text-string match to the results list"""
+#        source = BasicMethodSource()
+#        result = self.parse( """
+#            x := c*
+#            c := 'c'
+#        """, 'x', 'ccc', source)
+#        assert result == (1,[
+#            'c','c','c',
+#        ],3), """Result was %s"""%( result, )
+#        
+#    def test_AppendTagObj( self ):
+#        """Test appending the tagobject to the results list"""
+#        source = BasicMethodSource()
+#        result = self.parse( """
+#            x := d*
+#            d := 'd'
+#        """, 'x', 'ddd', source)
+#        assert result == (1,[
+#            "hello world","hello world","hello world",
+#        ],3)
+#
+#    def test_AppendToTagObj( self ):
+#        """Test basic ability to call a method instead of regular functioning"""
+#        source = AppendToTagobjMethodSource()
+#        result = self.parse( """
+#            x := d*
+#            d := 'd'
+#        """, 'x', 'ddd', source)
+#        assert source._o_d == [ (None,0,1,NullResult),(None,1,2,NullResult),(None,2,3,NullResult)], """Method source methods were not called, or called improperly:\n%s"""%(source._o_d,)
 
 import test_grammarparser
 import test_erroronfail
@@ -514,7 +522,8 @@ def getSuite():
         test_erroronfail.getSuite(),
         unittest.makeSuite(ParserGenerationTests, 'test'),
         unittest.makeSuite(NameTests, 'test'),
-        unittest.makeSuite(CallTests, 'test'),
+#        unittest.makeSuite(CallTests, 'test'),
+        unittest.makeSuite(GrammarTests),
     ))
 
 if __name__ == "__main__":

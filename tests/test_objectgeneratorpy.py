@@ -1,5 +1,5 @@
 import unittest, pprint, traceback
-from simpleparse.objectgeneratorpy import *
+from simpleparse.objectgenerator import *
 from genericvalues import NullResult, AnyInt
 
 class ElementTokenTests(unittest.TestCase):

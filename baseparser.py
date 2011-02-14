@@ -27,7 +27,8 @@ class BaseParser:
             processor = self.buildProcessor()
         if stop is None:
             stop = len(data)
-        value = tag( data, self.buildTagger( production, processor), start, stop )
+        parser = self.buildParser( production, processor )
+        value = parser( data, start=start, stop=stop )
         if processor and callable(processor):
             return processor( value, data )
         else:
@@ -50,13 +51,13 @@ class BaseParser:
         See: simpleparse.processor module for details.
         """
         return None
-    def buildTagger( self, name, processor ):
+    def buildParser( self, name, processor ):
         """Build the tag-table for the parser
 
         This method must be implemented by your base class and _not_
         call the implementation here.
         """
-        raise NotImplementedError( """Parser sub-class %s hasn't implemented a buildTagger method"""%(self.__class__.__name__))
+        raise NotImplementedError( """Parser sub-class %s hasn't implemented a buildParser method"""%(self.__class__.__name__))
     def resetBeforeParse( self ):
         """Called just before the parser's parse method starts working,
 

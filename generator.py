@@ -15,81 +15,36 @@ class Generator:
     def __init__( self ):
         """Initialise the Generator"""
         self.names = []
-        self.rootObjects = []
+        self.rootObjects = {}
         self.methodSource = None
         self.definitionSources = []
     def getNameIndex( self, name ):
         '''Return the index into the main list for the given name'''
-        try:
-            return self.names.index( name )
-        except ValueError:
-            
-            for source in self.definitionSources:
-                if source.has_key( name ):
-                    return self.addDefinition( name, source[name])
-##			import pdb
-##			pdb.set_trace()
-            raise NameError( '''The name %s is not defined within this generator'''%(repr(name)), self )
+        return name
     def getRootObjects( self, ):
         '''Return the list of root generator objects'''
         return self.rootObjects
-    def getNames( self, ):
+    def getNames( self ):
         '''Return the list of root generator objects'''
-        return self.names
+        return self.rootObjects.keys()
     def getRootObject( self, name ):
         """Get a particular root object by name"""
-        return self.getRootObjects()[ self.getNameIndex(name)]
+        return self.rootObjects[ name ]
+    
+    def __getitem__( self, name ):
+        return self.rootObjects[name]
+    def get( self, name, default=None ):
+        return self.rootObjects.get( name, default )
     
     def addDefinition( self, name, rootElement ):
         '''Add a new definition (object) to the generator'''
-        try:
-            self.names.index( name )
+        if name in self.rootObjects :
             raise NameError( '''Attempt to redefine an existing name %s'''%(name), self )
-        except ValueError:
-            self.names.append( name )
-            self.rootObjects.append( rootElement )
-            return self.getNameIndex( name )
+        self.rootObjects[name] = rootElement
     def buildParser( self, name, methodSource=None ):
         '''Build the given parser definition, returning a Parser object'''
-        self.parserList = {}
-        self.terminalParserCache = {}
-        self.methodSource = methodSource
-        i = 0
-        while i < len(self.rootObjects):
-            # XXX Note: rootObjects will grow in certain cases where
-            # a grammar is loading secondary grammars into itself
-            rootObject = self.rootObjects[i]
-            try:
-                if len(self.parserList) <= i or self.parserList[i] is None:
-                    parser = rootObject.to_parser( self )
-                    self.setTerminalParser( i, parser )
-            except NameError,err:
-                currentRuleName = self.names[i]
-                err.args = err.args + ('current declaration is %s'%(currentRuleName), )
-                raise
-            i = i + 1
-        assert None not in self.parserList, str( self.parserList)
-        return self.parserList [self.getNameIndex (name)]
-    def setTerminalParser( self, name, parser ):
-        """Explicitly set the parser value for given name"""
-        self.parserList[name] = parser
-    def getTerminalParser( self, index ):
-        """Try to retrieve a parser from the parser-list"""
-        try:
-            return self.parserList[ index ]
-        except IndexError:
-            return None
-    def cacheCustomTerminalParser( self, index, flags, parser ):
-        """Optimization to reuse customized terminal parsers"""
-        self.terminalParserCache[ (index,flags) ] = parser
-    def getCustomTerminalParser( self, index, flags ):
-        """Retrieved a cached customized terminal parser or None"""
-        return self.terminalParserCache.get( (index, flags))
         
-    def getParserList (self):
-        return self.parserList
-
-
+        return self.getRootObject(name).to_parser( self )
     def getObjectForName( self, name):
         """Determine whether our methodSource has a parsing method for the given name
 
@@ -122,7 +77,6 @@ class Generator:
         """Add a source for definitions when the current grammar doesn't supply
         a particular rule (effectively common/shared items for the grammar)."""
         self.definitionSources.append( item )
-
 
 ### Compatability API
 ##  This API exists to allow much of the code written with SimpleParse 1.0

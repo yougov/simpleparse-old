@@ -1,11 +1,11 @@
 """Pure-python implementation of ObjectGenerator classes"""
 from simpleparse.error import ParserSyntaxError
 
-class Parser( object ):
+class CallableParser( object ):
     def __init__( self, grammar ):
         self.grammar = grammar 
-    def __call__( self, content, start=0, end=None, *args, **named ):
-        state = State( content, start, end, *args, **named )
+    def __call__( self, content, start=0, stop=None, *args, **named ):
+        state = State( content, start, stop, *args, **named )
         try:
             result = self.grammar( state )
         except NoMatch, err:
@@ -15,7 +15,7 @@ class Parser( object ):
 
 class State( object ):
     """Parser state for a parsing run"""
-    def __init__( self, buffer, start=0, stop=None ):
+    def __init__( self, buffer, start=0, stop=None, generator=None ):
         self.buffer = buffer 
         self.start = start 
         self.current = start
@@ -29,6 +29,7 @@ class State( object ):
             raise ValueError( "stop < start", stop, start )
         self.stop = stop
         self.stack = []
+        self.generator = generator
     def enter( self, token ):
         """Enter parsing of the given (grouping) element token (save internal state)"""
         self.stack.append( token )
@@ -41,14 +42,29 @@ class State( object ):
 
 class Match( object ):
     """A token generated during a parse"""
-    def __init__( self, state, token, **named ):
+    def __init__( self, token, state, **named ):
         named['state'] = state 
         named['token'] = token
+        named['tag'] = token.name
         self.__dict__.update( **named )
+    tag = None
     success = True 
     start = None 
     stop = None 
     children = None
+    def __cmp__( self, other ):
+        return cmp( (self.tag,self.start,self.stop,self.children), other )
+    def __getitem__( self, index ):
+        return (self.tag,self.start,self.stop,self.children)[index]
+    def __repr__( self ):
+        return '%s(%r,%r,%r,%r)'%(
+            self.__class__.__name__,
+            self.tag,
+            self.start,
+            self.stop,
+            self.children,
+        )
+
 class NoMatch( Exception ):
     """Raised when no match is found"""
 class EOFReached( NoMatch ):
@@ -89,7 +105,7 @@ class ElementToken( object ):
             return []
     def parse_repeating_optional( self, state ):
         result = []
-        while True:
+        while state.current < state.stop:
             try:
                 match = self.parse( state )
                 result.extend( match )
@@ -100,7 +116,7 @@ class ElementToken( object ):
         """By default, run base parse until it fails, push all tokens to the stack"""
         result = []
         found = False
-        while True:
+        while state.current < state.stop:
             try:
                 match = self.parse( state )
                 result.extend( match )
@@ -114,9 +130,9 @@ class ElementToken( object ):
         start = state.current
         try:
             self.parse( state )
-        except NoMatch, err:
+        except (EOFReached,NoMatch), err:
             state.current += 1
-            return [ Match( self, state, start = state.current, stop=state.current +1 ) ]
+            return [ ]
         else:
             state.current = start
             raise NoMatch( self, state )
@@ -128,7 +144,7 @@ class ElementToken( object ):
     def parse_negative_repeating( self, state ):
         result = []
         start = stop = state.current
-        while True:
+        while state.current < state.stop:
             try:
                 self.parse( state )
             except EOFReached, err:
@@ -143,7 +159,7 @@ class ElementToken( object ):
                 break # fail due to match
         state.current = stop
         if stop > start:
-            return [ Match( self, state, start=start, stop=stop ) ]
+            return [ ]
         raise NoMatch( self, state )
     def parse_negative_repeating_optional( self, state ):
         try:
@@ -153,21 +169,24 @@ class ElementToken( object ):
 
     def to_parser( self, generator=None, noReport=False ):
         # TODO: support noReport (copy self and return copy's final_method)
-        return Parser( self.final_method() )
-    def final_method( self ):
+        return CallableParser( self.final_method( generator, noReport) )
+    def final_method( self, generator=None, noReport=False ):
+        self.generator = generator 
         name = ['parse']
         for attribute in ('negative','repeating','optional'):
             if getattr( self, attribute ):
                 name.append( attribute )
-        return self._update( getattr( self, "_".join( name )) )
-    def _update( self, final_parser ):
+        return self._update( getattr( self, "_".join( name )), noReport=noReport)
+    def _update( self, final_parser, noReport=False ):
         def updater( state ):
             state.enter( self )
             start = state.current
             try:
                 try:
+                    print 'starting', final_parser.__name__, final_parser, self
                     result = final_parser( state )
                 except NoMatch, err:
+                    print 'fail on', self, state.current
                     if self.errorOnFail:
                         raise ParserSyntaxError( 
                             buffer = state.buffer, 
@@ -176,12 +195,16 @@ class ElementToken( object ):
                             production = self,
                         )
                     else:
+                        state.current = start
                         raise
                 stop = state.current
-                if self.report and self.name:
-                    return [ Match(state, self, start=start, stop=stop, children = result ) ]
-                else:
+                if noReport or not self.report:
                     del result[:]
+                elif self.expanded:
+                    pass
+                elif self.report and self.name:
+                    if self.lookahead or stop > start:
+                        result = [ Match( self,state, start=start, stop=stop, children = result ) ]
                 return result 
             finally:
                 state.exit( self )
@@ -197,7 +220,7 @@ class Literal( ElementToken ):
     def parse( self, state ):
         if state.buffer[state.current:state.current+self.length] == self.value :
             state.current = state.current + self.length
-            return [Match( self, state, start=state.current, stop=state.current + self.length )]
+            return []
         elif state.current + self.length >= state.stop:
             raise EOFReached( self, state )
         else:
@@ -212,7 +235,7 @@ class CILiteral( ElementToken ):
         test = state.buffer[state.current:state.current+self.length]
         if test.lower() == self._lower:
             state.current = state.current + self.length
-            return [Match( self, state, start=state.current, stop=state.current + self.length )]
+            return []
         elif state.current + self.length >= state.stop:
             raise EOFReached( self, state )
         else:
@@ -226,7 +249,7 @@ class Range( ElementToken ):
             raise EOFReached( state, self )
         if state.buffer[state.current] in self.value:
             state.current += 1
-            return [Match( self, state, start=state.current, stop=state.current+1)]
+            return []
         else:
             raise NoMatch( self, state )
         
@@ -235,7 +258,7 @@ class Range( ElementToken ):
             raise EOFReached( state, self )
         if state.buffer[state.current] not in self.value:
             state.current += 1
-            return [Match( self, state, start=state.current, stop=state.current+1)]
+            return []
         else:
             raise NoMatch( self, state )
     def parse_repeating( self, state ):
@@ -250,7 +273,7 @@ class Range( ElementToken ):
                 break 
         if current > start:
             state.current = current
-            return [Match( self, state, start=start, stop=current)]
+            return []
         else:
             raise NoMatch( self, state )
     def parse_negative_repeating( self, state ):
@@ -265,15 +288,27 @@ class Range( ElementToken ):
                 break 
         if current > start:
             state.current = current
-            return [Match( self, state, start=start, stop=current)]
+            return []
         else:
             raise NoMatch( self, state )
+    def __repr__( self ):
+        return '%s( value=%r, report=%r, negative=%r, optional=%r, repeating=%r )'%(
+            self.__class__.__name__,
+            self.value,
+            self.report,
+            self.negative,
+            self.optional,
+            self.repeating,
+        )
 
 class Group( ElementToken ):
     parsers = None
-    def to_parser( self ):
-        self.parsers = [ item.final_method( ) for item in self.children ]
-        return super( Group, self ).to_parser()
+    def final_method( self, generator=None, noReport=False ):
+        self.parsers = [ 
+            item.final_method( generator=generator, noReport=noReport ) 
+            for item in self.children 
+        ]
+        return super( Group, self ).final_method( generator, noReport )
 
 class SequentialGroup( Group ):
     """Parse a sequence of elements as a single token (with back-tracking)"""
@@ -288,8 +323,6 @@ class FirstOfGroup( Group ):
         for item in self.parsers:
             try: 
                 return item( state )
-            except EOFReached, err:
-                break
             except NoMatch, err:
                 pass
         raise NoMatch( self, state )
@@ -338,19 +371,6 @@ class ErrorOnFail(ElementToken):
         import copy
         return copy.copy( self )
 
-class LibraryElement( ElementToken ):
-    """Holder for a prebuilt item with it's own generator"""
-    generator = None
-    production = ""
-    methodSource = None
-    def to_parser( self, generator=None, noReport=0 ):
-        if self.methodSource is None:
-            source = generator.methodSource
-        else:
-            source = self.methodSource
-        self.parse = self.generator.buildParser( self.production, source ).grammar
-        return super( LibraryElement, self ).to_parser( generator, noReport )
-
 class Name( ElementToken ):
     """Reference to another rule in the grammar
 
@@ -387,110 +407,50 @@ class Name( ElementToken ):
         the name ref isn't reporting).
     """
     value = ""
-    # following two flags are new ideas in the rewrite...
     report = 1
-    def to_parser( self, generator, noReport=0 ):
-        """Create the table for parsing a name-reference
-
-        Note that currently most of the "compression" optimisations
-        occur here.
-        """
-        command = TableInList
-        target = generator.getRootObject(self.value)
-
-        reportSelf = (
-            (not noReport) and # parent hasn't suppressed reporting
-            self.report and # we are not suppressing ourselves
-            target.report and # target doesn't suppress reporting
-            (not self.negative) and # we aren't a negation, which doesn't report anything by itself
-            (not target.expanded) # we don't report the expanded production
+    _target = None 
+    def __repr__( self ):
+        return '%s( value=%r, report=%r, negative=%r, optional=%r, repeating=%r )'%(
+            self.__class__.__name__,
+            self.value,
+            self.report,
+            self.negative,
+            self.optional,
+            self.repeating,
         )
-        reportChildren = (
-            (not noReport) and # parent hasn't suppressed reporting
-            self.report and # we are not suppressing ourselves
-            target.report and # target doesn't suppress reporting
-            (not self.negative) # we aren't a negation, which doesn't report anything by itself
-        )
-        
-        new = copy.copy( target )
-        
-        flags = 0
-        if target.expanded:
-            # the target is the root of an expandedname declaration
-            # so we need to do special processing to make sure that
-            # it gets properly reported...
-            command = SubTableInList
-            tagobject = None
-            # check for indirected reference to another name...
-        elif not reportSelf:
-            tagobject = svalue
-        else:
-            flags, tagobject = generator.getObjectForName( svalue )
-            if flags:
-                command = command | flags
-        if tagobject is None and not flags:
-            if self.terminal(generator):
-                if extractFlags(self,reportChildren) != extractFlags(target):
-                    composite = compositeFlags(self,target, reportChildren)
-                    partial = generator.getCustomTerminalParser( sindex,composite)
-                    if partial is not None:
-                        return partial
-                    partial = tuple(copyToNewFlags(target, composite).toParser(
-                        generator,
-                        not reportChildren
-                    ))
-                    generator.cacheCustomTerminalParser( sindex,composite, partial)
-                    return partial
-                else:
-                    partial = generator.getTerminalParser( sindex )
-                    if partial is not None:
-                        return partial
-                    partial = tuple(target.toParser(
-                        generator,
-                        not reportChildren
-                    ))
-                    generator.setTerminalParser( sindex, partial)
-                    return partial
-        # base, required, positive table...
-        if (
-            self.terminal( generator ) and
-            (not flags) and
-            isinstance(target, (SequentialGroup,Literal,Name,Range))
-        ):
-            partial = generator.getTerminalParser( sindex )
-            if partial is None:
-                partial = tuple(target.toParser(
-                    generator,
-                    #not reportChildren
-                ))
-                generator.setTerminalParser( sindex, partial)
-            if len(partial) == 1 and len(partial[0]) == 3 and (
-                partial[0][0] is None or tagobject is None
-            ):
-                # there is a single child
-                # it doesn't report anything, or we don't
-                partial = (partial[0][0] or tagobject,)+ partial[0][1:]
-            else:
-                partial = (tagobject, Table, tuple(partial))
-            return self.permute( partial )
-        basetable = (
-            tagobject,
-            command, (
-                generator.getParserList (),
-                sindex,
+    @property
+    def target( self ):
+        if not self._target:
+            if (not self.name) and self.report and self.value:
+                self.name = self.value 
+            element = self.generator.get( self.value )
+            if element is None:
+                raise RuntimeError( """Undefined production: %s"""%( self.value, ))
+            # if we point to an expanded or non-reporting "table", adopt those features.
+            if element.report == False:
+                self.report = False 
+            if element.expanded:
+                self.expanded = True
+            self._target = element.final_method( 
+                generator = self.generator,
             )
-        )
-        return self.permute( basetable )
-    terminalValue = None
-    def terminal (self, generator):
-        """Determine if this element is terminal for the generator"""
-        if self.terminalValue in (0,1):
-            return self.terminalValue
-        self.terminalValue = 0
-        target = generator.getRootObject( self.value )
-        if target.terminal( generator):
-            self.terminalValue = 1
-        return self.terminalValue
+            self.parse = self._target
+        return self._target
+    def parse( self, state ):
+        return self.target( state )
+
+class LibraryElement( ElementToken ):
+    """Holder for a prebuilt item with it's own generator"""
+    generator = None
+    production = ""
+    methodSource = None
+    def to_parser( self, generator=None, noReport=False ):
+        if self.methodSource is None:
+            source = generator.methodSource
+        else:
+            source = self.methodSource
+        self.parse = self.generator.buildParser( self.production, source ).grammar
+        return super( LibraryElement, self ).to_parser( generator, noReport )
 
 
 def extractFlags( item, report=1 ):
