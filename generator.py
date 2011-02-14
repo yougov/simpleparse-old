@@ -29,12 +29,22 @@ class Generator:
         return self.rootObjects.keys()
     def getRootObject( self, name ):
         """Get a particular root object by name"""
-        return self.rootObjects[ name ]
-    
-    def __getitem__( self, name ):
-        return self.rootObjects[name]
+        try:
+            return self.rootObjects[ name ]
+        except (KeyError,NameError), err:
+            for source in self.definitionSources:
+                try:
+                    return source[name]
+                except (NameError,KeyError), err:
+                    pass 
+        raise NameError( name )
+    __getitem__ = getRootObject
     def get( self, name, default=None ):
-        return self.rootObjects.get( name, default )
+        """Get a particular token, or return default"""
+        try:
+            return self[ name ]
+        except (KeyError,NameError), err:
+            return default 
     
     def addDefinition( self, name, rootElement ):
         '''Add a new definition (object) to the generator'''
