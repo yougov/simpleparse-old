@@ -76,7 +76,8 @@ del _lc
 # follow a \\ char.
 
 from simpleparse.stt import TextTools
-c[ "EOF" ] = objectgenerator.FirstOfGroup( children = [
+c[ "EOF" ] = objectgenerator.EOF()
+c["EOL"] = objectgenerator.FirstOfGroup( children = [
     objectgenerator.Literal( value ='\r\n' ),
     objectgenerator.Range( value = '\r\n' ),
 ] )
