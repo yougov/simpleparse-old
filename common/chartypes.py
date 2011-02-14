@@ -75,7 +75,6 @@ del _lc
 # specially by Python's string-escaping when they
 # follow a \\ char.
 
-from simpleparse.stt import TextTools
 c[ "EOF" ] = objectgenerator.EOF()
 c["EOL"] = objectgenerator.FirstOfGroup( children = [
     objectgenerator.Literal( value ='\r\n' ),

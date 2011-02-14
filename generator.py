@@ -1,5 +1,4 @@
 """Abstract representation of an in-memory grammar that generates parsers"""
-from simpleparse.stt.TextTools import TextTools
 import traceback
 
 class Generator:

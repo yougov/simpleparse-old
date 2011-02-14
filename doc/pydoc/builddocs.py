@@ -16,9 +16,6 @@ if __name__ == "__main__":
     modules = [
         'simpleparse',
         'simpleparse.common',
-        'simpleparse.stt',
-        'simpleparse.stt.TextTools',
-        'simpleparse.stt.TextTools.mxTextTools',
         'simpleparse.examples',
         'simpleparse.tests',
         'simpleparse.xmlparser',

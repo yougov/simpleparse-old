@@ -84,17 +84,5 @@ largely deterministic grammars.""",
         packages = packages.keys(),
 #		include_package_data = True,
 #		zip_safe = False,
-        ext_modules=[
-            Extension(
-                "simpleparse.stt.TextTools.mxTextTools.mxTextTools", 
-                [
-                    'stt/TextTools/mxTextTools/mxTextTools.c',
-                    'stt/TextTools/mxTextTools/mxte.c',
-                    'stt/TextTools/mxTextTools/mxbmse.c',
-                ],
-                include_dirs=['stt/TextTools/mxTextTools'],
-                define_macros=[ ('MX_BUILDING_MXTEXTTOOLS',1) ],
-            ),
-        ],
         **extraArguments
     )

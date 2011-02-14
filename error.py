@@ -1,6 +1,8 @@
 """Definition of the ParserSyntaxError raised on parse failure"""
 import string
-from simpleparse.stt.TextTools.TextTools import countlines
+
+def countlines( source ):
+    return source.count( '\n' )
 
 class ParserSyntaxError( SyntaxError ):
     """Sub-class of SyntaxError for use by SimpleParse parsers
