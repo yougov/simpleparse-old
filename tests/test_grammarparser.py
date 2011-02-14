@@ -13,9 +13,6 @@ class SimpleParseGrammarTests(unittest.TestCase):
     def doBasicTest(self, parserName, testValue, expected, ):
         parser = SPGenerator.buildParser( parserName )
         result = parser( testValue )
-        import pprint 
-        import pdb 
-        pdb.set_trace()
         assert result == expected, '''\nexpected:%s\n     got:%s\n'''%( expected, result )
     def testChar1( self ):
         self.doBasicTest(
@@ -850,7 +847,7 @@ class SimpleParseGrammarTests(unittest.TestCase):
 #        result = TextTools.tag( declaration, parser )
 #        assert result[-1] == len(declaration), '''Didn't complete parse of the simpleparse declaration, only got %s chars, should have %s'''%(result[-1], len(declaration))
 
-#recursiveParser = Parser(declaration)
+recursiveParser = Parser(declaration)
 
 class SimpleParseRecursiveTests(SimpleParseGrammarTests):
     """Test parsing of grammar elements with generated version of simpleparse grammar"""
@@ -861,7 +858,7 @@ class SimpleParseRecursiveTests(SimpleParseGrammarTests):
 def getSuite():
     return unittest.TestSuite((
         unittest.makeSuite(SimpleParseGrammarTests,'test'),
-#        unittest.makeSuite(SimpleParseRecursiveTests,'test'),
+        unittest.makeSuite(SimpleParseRecursiveTests,'test'),
     ))
 
 if __name__ == "__main__":

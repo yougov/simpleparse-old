@@ -107,8 +107,7 @@ class ElementToken( object ):
         result = []
         while state.current < state.stop:
             try:
-                match = self.parse( state )
-                result.extend( match )
+                result.extend( self.parse( state ) )
             except NoMatch, err:
                 break
         return result
@@ -197,14 +196,6 @@ class ElementToken( object ):
                     else:
                         state.current = start
                         raise
-                stop = state.current
-                if noReport or not self.report:
-                    del result[:]
-                elif self.expanded:
-                    pass
-                elif self.report and self.name:
-                    if self.lookahead or stop > start:
-                        result = [ Match( self,state, start=start, stop=stop, children = result ) ]
                 return result 
             finally:
                 state.exit( self )
@@ -426,18 +417,35 @@ class Name( ElementToken ):
             element = self.generator.get( self.value )
             if element is None:
                 raise RuntimeError( """Undefined production: %s"""%( self.value, ))
+            
+            # Now the complex part... we need our child to be a composite of our 
+            # flags and their flags, basically if either of us says "expand" or "no report" 
+            # then we need to ensure that the child we use to parse is using that parsing 
+            # form, otherwise we want to report a Match() for every match of the target 
+            # i.e. we want our "repeating" algorithms to be slightly different than the 
+            # results of regular parse references...
+                
             # if we point to an expanded or non-reporting "table", adopt those features.
-            if element.report == False:
+            if not element.report:
                 self.report = False 
             if element.expanded:
                 self.expanded = True
             self._target = element.final_method( 
                 generator = self.generator,
             )
-            self.parse = self._target
         return self._target
     def parse( self, state ):
-        return self.target( state )
+        """Implement wrapping of results for name references"""
+        start = state.current
+        result = self.target( state )
+        stop = state.current
+        if self.report:
+            if self.name and not self.expanded:
+                if self.lookahead or stop > start:
+                    result = [ Match( self,state, start=start, stop=stop, children = result ) ]
+            return result 
+        else:
+            return []
 
 class LibraryElement( ElementToken ):
     """Holder for a prebuilt item with it's own generator"""
@@ -451,30 +459,3 @@ class LibraryElement( ElementToken ):
             source = self.methodSource
         self.parse = self.generator.buildParser( self.production, source ).grammar
         return super( LibraryElement, self ).to_parser( generator, noReport )
-
-
-def extractFlags( item, report=1 ):
-    """Extract the flags from an item as a tuple"""
-    return (
-        item.negative,
-        item.optional,
-        item.repeating,
-        item.errorOnFail,
-        item.lookahead,
-        item.report and report,
-    )
-def compositeFlags( first, second, report=1 ):
-    """Composite flags from two items into overall flag-set"""
-    result = []
-    for a,b in map(None, extractFlags(first, report), extractFlags(second, report)):
-        result.append( a or b )
-    return tuple(result)
-def copyToNewFlags( target, flags ):
-    """Copy target using combined flags"""
-    new = copy.copy( target )
-    for name,value in map(None,
-        ("negative","optional","repeating","errorOnFail","lookahead",'report'),
-        flags,
-    ):
-        setattr(new, name,value)
-    return new

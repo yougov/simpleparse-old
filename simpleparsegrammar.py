@@ -459,7 +459,7 @@ class Parser(baseparser.BaseParser):
                 """Unable to complete parsing of the EBNF, stopped at line %s (%s chars of %s)
 Unparsed:\n%s..."""%(lineNumber, next, len(ebnf), ebnf[next:next+100])
             )
-        self.generator = processor.generator
+        self._generator = processor.generator
     def buildParser( self, name=None, processor = None ):
         """Build the tag-table for parsing the EBNF for this parser"""
         return SPGenerator.buildParser( name, processor )

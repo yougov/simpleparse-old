@@ -32,10 +32,10 @@ class Parser( baseparser.BaseParser ):
         """
         self._rootProduction = root
         self._declaration = declaration
-        self.generator = simpleparsegrammar.Parser(
+        self._generator = simpleparsegrammar.Parser(
             declaration, prebuilts,
             definitionSources = definitionSources,
-        ).generator
+        )._generator
     def buildParser( self, production=None, processor=None):
         """Get a particular parsing table for a particular production"""
         if production is None:
