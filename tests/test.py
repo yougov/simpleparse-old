@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import unittest
-import mx_test, test_objectgenerator, test_simpleparsegrammar
+import test_objectgenerator, test_simpleparsegrammar
 import test_common_chartypes, test_common_numbers
 import sys
 try:
@@ -12,14 +12,10 @@ import test_common_strings, test_printers, test_optimisation, test_common_commen
 import test_xml
 
 import string
-from simpleparse.stt import TextTools
-mxVersion = tuple(string.split( TextTools.__version__, '.'))
-mxVersion = mxVersion[:3]
 
 def getSuite():
     set = []
     for module in [
-        #mx_test,
         test_objectgenerator,
         test_simpleparsegrammar,
         test_common_chartypes,
@@ -27,9 +23,9 @@ def getSuite():
         test_common_iso_date,
         test_common_strings,
         test_common_comments,
-        test_printers,
+#        test_printers,
         test_xml,
-        test_optimisation,
+#        test_optimisation,
     ]:
         if hasattr( module, 'getSuite'):
             set.append( module.getSuite() )

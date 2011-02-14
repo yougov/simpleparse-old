@@ -55,6 +55,8 @@ class Match( object ):
     start = None 
     stop = None 
     children = None
+    def __len__( self ):
+        return 4
     def __cmp__( self, other ):
         return cmp( (self.tag,self.start,self.stop,self.children), other )
     def __getitem__( self, index ):
@@ -187,26 +189,35 @@ class ElementToken( object ):
             start = state.current
             try:
                 try:
-                    print 'starting', final_parser.__name__, final_parser, self
+#                    print 'starting', final_parser.__name__, final_parser, self
                     result = final_parser( state )
                 except NoMatch, err:
-                    print 'fail on', self, state.current
+#                    print 'fail on', self, state.current
                     if self.errorOnFail:
-                        raise ParserSyntaxError( 
-                            buffer = state.buffer, 
-                            position = state.current,
-                            line = -1,
-                            production = self,
-                        )
+                        self.errorOnFail( state )
                     else:
                         state.current = start
                         raise
+                if self.lookahead:
+                    # does not advance...
+                    state.current = start
                 return result 
             finally:
                 state.exit( self )
         updater.__name__ = '%s_%s'%( self.__class__.__name__, final_parser.__name__)
         updater.__doc__ = final_parser.__doc__
         return updater
+    def __repr__( self ):
+        return '%s(value=%r,report=%r,negative=%r,optional=%r,repeating=%r,expanded=%r,lookahead=%r )'%(
+            self.__class__.__name__,
+            getattr(self,'value',None),
+            self.report,
+            self.negative,
+            self.optional,
+            self.repeating,
+            self.expanded,
+            self.lookahead,
+        )
 
 class Literal( ElementToken ):
     value = None
@@ -287,15 +298,6 @@ class Range( ElementToken ):
             return []
         else:
             raise NoMatch( self, state )
-    def __repr__( self ):
-        return '%s( value=%r, report=%r, negative=%r, optional=%r, repeating=%r )'%(
-            self.__class__.__name__,
-            self.value,
-            self.report,
-            self.negative,
-            self.optional,
-            self.repeating,
-        )
 
 class Group( ElementToken ):
     parsers = None
@@ -360,8 +362,8 @@ class ErrorOnFail(ElementToken):
         error.error_message = self.message
         error.production = self.production
         error.expected= self.expected
-        error.buffer = text
-        error.position = position
+        error.buffer = state.buffer
+        error.position = state.current
         raise error
     def copy( self ):
         import copy
@@ -405,15 +407,6 @@ class Name( ElementToken ):
     value = ""
     report = 1
     _target = None 
-    def __repr__( self ):
-        return '%s( value=%r, report=%r, negative=%r, optional=%r, repeating=%r )'%(
-            self.__class__.__name__,
-            self.value,
-            self.report,
-            self.negative,
-            self.optional,
-            self.repeating,
-        )
     @property
     def target( self ):
         if not self._target:
@@ -444,6 +437,9 @@ class Name( ElementToken ):
         start = state.current
         result = self.target( state )
         stop = state.current
+        if self.name in ('something','r','s'):
+            import pdb 
+            pdb.set_trace()
         if self.report:
             if self.name and not self.expanded:
                 if self.lookahead or stop > start:
