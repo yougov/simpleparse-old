@@ -1,12 +1,11 @@
 import unittest, pprint, traceback
 from simpleparse.objectgenerator import *
-from simpleparse.stt.TextTools import TextTools
 from genericvalues import NullResult, AnyInt
 
 class ElementTokenTests(unittest.TestCase):
     def doBasicTest(self, instance, testvalue, expected, startPosition=0 ):
-        table = tuple(instance.toParser())
-        result = tag( testvalue, table , startPosition)
+        table = instance.to_parser()
+        result = table( testvalue, start = startPosition )
         assert result == expected, '''\n\texpected:%s\n\tgot:%s\n'''%( expected, result )
     def testString1( self ):
         self.doBasicTest(

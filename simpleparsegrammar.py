@@ -453,8 +453,6 @@ class Parser(baseparser.BaseParser):
         success, tags, next = self.parse( ebnf, self._rootProduction, processor=processor )
         if next != len(ebnf):
             lineNumber = lines(0, next, ebnf)
-            import pdb 
-            pdb.set_trace()
             raise ValueError(
                 """Unable to complete parsing of the EBNF, stopped at line %s (%s chars of %s)
 Unparsed:\n%s..."""%(lineNumber, next, len(ebnf), ebnf[next:next+100])

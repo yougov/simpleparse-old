@@ -80,7 +80,12 @@ if haveMX:
                 set.get(self.timeName) or DateTime.RelativeDateTime(hour=0,minute=0,second=0),
                 set.get( "offset" ),
             )
-            base = base + time
+            try:
+                base = base + time
+            except Exception, err:
+                import pdb 
+                pdb.set_trace()
+                
             offset = set.get( "offset" )
             if offset is not None:
                 # an explicit timezone was entered, convert to gmt and return as appropriate...

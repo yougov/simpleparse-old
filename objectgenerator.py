@@ -5,7 +5,10 @@ class CallableParser( object ):
     def __init__( self, grammar ):
         self.grammar = grammar 
     def __call__( self, content, start=0, stop=None, *args, **named ):
-        state = State( content, start, stop, *args, **named )
+        if not isinstance( content, State ):
+            state = State( content, start, stop, *args, **named )
+        else:
+            state = content
         try:
             result = self.grammar( state )
         except NoMatch, err:
@@ -85,6 +88,7 @@ class ElementToken( object ):
     # as if the name wasn't present...
     expanded = 0
     lookahead = 0
+    generator = 0
     def __init__( self, **namedarguments ):
         """Initialize the object with named attributes
 
@@ -170,7 +174,8 @@ class ElementToken( object ):
         # TODO: support noReport (copy self and return copy's final_method)
         return CallableParser( self.final_method( generator, noReport) )
     def final_method( self, generator=None, noReport=False ):
-        self.generator = generator 
+        if not self.generator:
+            self.generator = generator 
         name = ['parse']
         for attribute in ('negative','repeating','optional'):
             if getattr( self, attribute ):
@@ -451,11 +456,28 @@ class LibraryElement( ElementToken ):
     """Holder for a prebuilt item with it's own generator"""
     generator = None
     production = ""
+    expand = True
+    @property
+    def value( self ):
+        return self.production
     methodSource = None
-    def to_parser( self, generator=None, noReport=False ):
-        if self.methodSource is None:
-            source = generator.methodSource
+    _target = None
+    @property 
+    def target( self):
+        if self._target is None:
+            self._target = self.generator.buildParser( self.production, self.methodSource )
+        return self._target
+    def parse( self, state ):
+        """Implement expanded references for library elements"""
+        start = state.current
+        success,result,stop = self.target( state )
+        if not success:
+            raise NoMatch( self, state )
         else:
-            source = self.methodSource
-        self.parse = self.generator.buildParser( self.production, source ).grammar
-        return super( LibraryElement, self ).to_parser( generator, noReport )
+            if self.report:
+                if self.name and not self.expanded:
+                    if self.lookahead or stop > start:
+                        result = [ Match( self,state, start=start, stop=stop, children = result ) ]
+                return result 
+            else:
+                return []
