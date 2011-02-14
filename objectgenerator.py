@@ -48,7 +48,7 @@ class Match( object ):
     def __init__( self, token, state, **named ):
         named['state'] = state 
         named['token'] = token
-        named['tag'] = token.name
+        named['tag'] = token.value
         self.__dict__.update( **named )
     tag = None
     success = True 
@@ -406,12 +406,12 @@ class Name( ElementToken ):
     """
     value = ""
     report = 1
+    expand_child = False 
+    report_child = True
     _target = None 
     @property
     def target( self ):
         if not self._target:
-            if (not self.name) and self.report and self.value:
-                self.name = self.value 
             element = self.generator.get( self.value )
             if element is None:
                 raise RuntimeError( """Undefined production: %s"""%( self.value, ))
@@ -424,10 +424,8 @@ class Name( ElementToken ):
             # results of regular parse references...
                 
             # if we point to an expanded or non-reporting "table", adopt those features.
-            if not element.report:
-                self.report = False 
-            if element.expanded:
-                self.expanded = True
+            self.report_child = element.report and self.report
+            self.expand_child = element.expanded
             self._target = element.final_method( 
                 generator = self.generator,
             )
@@ -437,11 +435,8 @@ class Name( ElementToken ):
         start = state.current
         result = self.target( state )
         stop = state.current
-        if self.name in ('something','r','s'):
-            import pdb 
-            pdb.set_trace()
-        if self.report:
-            if self.name and not self.expanded:
+        if self.report_child:
+            if self.value and not self.expand_child:
                 if self.lookahead or stop > start:
                     result = [ Match( self,state, start=start, stop=stop, children = result ) ]
             return result 
@@ -462,6 +457,9 @@ class LibraryElement( ElementToken ):
     def target( self):
         if self._target is None:
             self._target = self.generator.buildParser( self.production, self.methodSource )
+            element = self.generator.get( self.production )
+            self.report_child = element.report and self.report
+            self.expand_child = True
         return self._target
     def parse( self, state ):
         """Implement expanded references for library elements"""
@@ -470,8 +468,8 @@ class LibraryElement( ElementToken ):
         if not success:
             raise NoMatch( self, state )
         else:
-            if self.report:
-                if self.name and not self.expanded:
+            if self.report_child:
+                if self.value and not self.expand_child:
                     if self.lookahead or stop > start:
                         result = [ Match( self,state, start=start, stop=stop, children = result ) ]
                 return result 

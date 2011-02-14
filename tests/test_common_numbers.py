@@ -169,7 +169,7 @@ class CommonTests(unittest.TestCase):
             for data, length, value in yestable:
                 success, results, next = p.parse( data, processor = proc)
                 assert next == length, """Did not parse string %s of %s as a %s result=%s"""%( repr(data[:length]), repr(data), production, (success, results, next))
-                assert results[0] == value, """Didn't get expected value from processing value %s, expected %s, got %s"""%( data[:length], value, results[0])
+                assert results[0] == value, """Didn't get expected value from processing value %r, expected %r, got %r"""%( data[:length], value, results[0])
                 
             for data in notable:
                 success, results, next = p.parse( data)
