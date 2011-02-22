@@ -44,17 +44,20 @@ class State( object ):
             raise RuntimeError( """Unbalanced calls to enter/exit on %s""", token )
 
 class Match( object ):
-    """A token generated during a parse"""
-    def __init__( self, token, state, **named ):
-        named['state'] = state 
-        named['token'] = token
-        named['tag'] = token.value
-        self.__dict__.update( **named )
-    tag = None
-    success = True 
-    start = None 
-    stop = None 
-    children = None
+    """A token generated during a parse
+    
+    token -- the token which matched 
+    tag -- the tag (token.value) which matched 
+    state -- the state object against which we matched 
+    start -- the index at which the match started 
+    children -- the children (if any) of the match
+    """
+    def __init__( self, token, state,start=None,stop=None,children=None ):
+        self.tag = token.value 
+        self.state = state 
+        self.start = start 
+        self.stop = stop
+        self.children = children
     def __len__( self ):
         return 4
     def __cmp__( self, other ):
@@ -77,27 +80,32 @@ class EOFReached( NoMatch ):
 
 class ElementToken( object ):
     """Base class for ElementTokens, provides fallback implementations for flag-parsing based on core "parse" method"""
-    negative = 0
-    optional = 0
-    repeating = 0
-    report = 1
-    name = None
-    # note that optional and errorOnFail are mutually exclusive
-    errorOnFail = None
-    # any item may be marked as expanded,
-    # which says that it's a top-level declaration
-    # and that links to it should automatically expand
-    # as if the name wasn't present...
-    expanded = 0
-    lookahead = 0
-    generator = 0
-    def __init__( self, **namedarguments ):
+    def __init__( 
+        self,
+        value = None,
+        negative = False,
+        optional = False,
+        repeating = False,
+        report = True,
+        errorOnFail = None,
+        expanded = False,
+        lookahead = False,
+        generator = None,
+    ):
         """Initialize the object with named attributes
 
         This method simply takes the named attributes and
         updates the object's dictionary with them
         """
-        self.__dict__.update( namedarguments )
+        self.value = value
+        self.negative = negative
+        self.optional = optional
+        self.repeating = repeating
+        self.report = report 
+        self.errorOnFail = errorOnFail
+        self.expanded = expanded 
+        self.lookahead = lookahead 
+        self.generator = generator
 
     def parse( self, state ):
         raise NotImplementedError( self, 'parse' )
@@ -189,10 +197,8 @@ class ElementToken( object ):
             start = state.current
             try:
                 try:
-#                    print 'starting', final_parser.__name__, final_parser, self
                     result = final_parser( state )
                 except NoMatch, err:
-#                    print 'fail on', self, state.current
                     if self.errorOnFail:
                         self.errorOnFail( state )
                     else:
@@ -220,9 +226,20 @@ class ElementToken( object ):
         )
 
 class Literal( ElementToken ):
-    value = None
-    def __init__( self, **named ):
-        super( Literal, self ).__init__( **named )
+    def __init__( 
+        self, value, 
+        negative = False,
+        optional = False,
+        repeating = False,
+        report = True,
+        errorOnFail = None,
+        expanded = False,
+        lookahead = False,
+        generator = None,
+    ):
+        super( Literal, self ).__init__( 
+            value,negative,optional,repeating,report,errorOnFail,expanded,lookahead,generator 
+        )
         self.length = len(self.value)
     def parse( self, state ):
         if state.buffer[state.current:state.current+self.length] == self.value :
@@ -233,11 +250,23 @@ class Literal( ElementToken ):
         else:
             raise NoMatch( self, state )
 class CILiteral( ElementToken ):
-    value = None 
-    def __init__( self, **named ):
-        super( CILiteral, self ).__init__( **named )
-        self.length = len(self.value)
-        self._lower = self.value.lower()
+    def __init__( 
+        self, value, 
+        negative = False,
+        optional = False,
+        repeating = False,
+        report = True,
+        errorOnFail = None,
+        expanded = False,
+        lookahead = False,
+        generator = None,
+    ):
+        super( CILiteral, self ).__init__( 
+            value,negative,optional,repeating,report,errorOnFail,expanded,lookahead,generator 
+        )
+        self.value = value
+        self.length = len(value)
+        self._lower = value.lower()
     def parse( self, state ):
         test = state.buffer[state.current:state.current+self.length]
         if test.lower() == self._lower:
@@ -250,7 +279,6 @@ class CILiteral( ElementToken ):
 
 class Range( ElementToken ):
     """Match a range (set of ranges) of characters"""
-    value = None 
     def parse( self, state ):
         if state.current >= state.stop:
             raise EOFReached( state, self )
@@ -300,11 +328,26 @@ class Range( ElementToken ):
             raise NoMatch( self, state )
 
 class Group( ElementToken ):
-    parsers = None
+    def __init__( 
+        self, children, 
+        negative = False,
+        optional = False,
+        repeating = False,
+        report = True,
+        errorOnFail = None,
+        expanded = False,
+        lookahead = False,
+        generator = None,
+    ):
+        super( Group, self ).__init__( 
+            children,negative,optional,repeating,report,errorOnFail,expanded,lookahead,generator 
+        )
+        self.parsers = None
+    
     def final_method( self, generator=None, noReport=False ):
         self.parsers = [ 
             item.final_method( generator=generator, noReport=noReport ) 
-            for item in self.children 
+            for item in self.value
         ]
         return super( Group, self ).final_method( generator, noReport )
 
@@ -331,7 +374,7 @@ class EOF( ElementToken ):
             return []
         raise NoMatch( self, state )
 
-class ErrorOnFail(ElementToken):
+class ErrorOnFail(object):
     """When called as a matching function, raises a SyntaxError
 
     Attributes:
@@ -404,8 +447,6 @@ class Name( ElementToken ):
         name ref is reporting) and not for another (where
         the name ref isn't reporting).
     """
-    value = ""
-    report = 1
     expand_child = False 
     report_child = True
     _target = None 
@@ -416,13 +457,6 @@ class Name( ElementToken ):
             if element is None:
                 raise RuntimeError( """Undefined production: %s"""%( self.value, ))
             
-            # Now the complex part... we need our child to be a composite of our 
-            # flags and their flags, basically if either of us says "expand" or "no report" 
-            # then we need to ensure that the child we use to parse is using that parsing 
-            # form, otherwise we want to report a Match() for every match of the target 
-            # i.e. we want our "repeating" algorithms to be slightly different than the 
-            # results of regular parse references...
-                
             # if we point to an expanded or non-reporting "table", adopt those features.
             self.report_child = element.report and self.report
             self.expand_child = element.expanded
@@ -445,19 +479,28 @@ class Name( ElementToken ):
 
 class LibraryElement( ElementToken ):
     """Holder for a prebuilt item with it's own generator"""
-    generator = None
-    production = ""
-    expand = True
-    @property
-    def value( self ):
-        return self.production
-    methodSource = None
     _target = None
+    def __init__( 
+        self, production, 
+        negative = False,
+        optional = False,
+        repeating = False,
+        report = True,
+        errorOnFail = None,
+        expanded = False,
+        lookahead = False,
+        generator = None,
+        methodSource=None,
+    ):
+        super( LibraryElement, self ).__init__( 
+            production,negative,optional,repeating,report,errorOnFail,expanded,lookahead,generator 
+        )
+        self.methodSource = methodSource
     @property 
     def target( self):
         if self._target is None:
-            self._target = self.generator.buildParser( self.production, self.methodSource )
-            element = self.generator.get( self.production )
+            self._target = self.generator.buildParser( self.value, self.methodSource )
+            element = self.generator.get( self.value )
             self.report_child = element.report and self.report
             self.expand_child = True
         return self._target
