@@ -7,7 +7,7 @@ can say "returns no children" (NullResults) for result-tuples or
 "whatever failure position" for failure return values.
 """
 
-class _NullResults:
+class _NullResults(object):
     def __cmp__( self, other ):
         if other == [] or other == None:
             return 0
@@ -16,7 +16,7 @@ class _NullResults:
     def __repr__( self ):
         return "<Null Children>"
 NullResult = _NullResults()
-class _AnyInt:
+class _AnyInt(object):
     def __cmp__( self, other ):
         if type(other) == type(1):
             return 0

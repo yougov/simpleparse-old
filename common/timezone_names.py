@@ -188,7 +188,7 @@ else:
 # account for time module's different counting procedure...
 LOCAL_ZONE = -LOCAL_ZONE
 
-class TimeZoneNameInterpreter:
+class TimeZoneNameInterpreter(object):
     """Intepret a timezone specified as a military or civilian timezone name
 
     Return value is an offset from UTC given in seconds.

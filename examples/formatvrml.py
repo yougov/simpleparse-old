@@ -54,7 +54,7 @@ ts                           :=  ( [ \011-\015,]+ / comment+ )*
 '''
 vrmlparser = Parser( VRMLPARSERDEF, 'vrmlFile' )
 
-class VRMLFormatter:
+class VRMLFormatter(object):
     '''
     Base formatting class
     '''

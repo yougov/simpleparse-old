@@ -13,7 +13,7 @@ from simpleparse.stt.TextTools.TextTools import *
 from simpleparse.parser import Parser
 from simpleparse import dispatchprocessor
 
-class REMatch:
+class REMatch(object):
     """An object wrapping a regular expression with __call__ (and Call) semantics"""
     def __init__( self, expression, flags=0 ):
         self.matcher = re.compile( expression, flags )

@@ -71,7 +71,7 @@ mn = map(string.lower, mn )
 
 common.share( c )
 
-class NameInterpreter:
+class NameInterpreter(object):
     offset = 1
     def __init__( self, offset = 1 ):
         self.offset = offset

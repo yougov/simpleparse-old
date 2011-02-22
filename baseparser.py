@@ -1,7 +1,7 @@
 """Base class for real-world parsers (such as parser.Parser)"""
 from simpleparse.generator import Generator
 
-class BaseParser:
+class BaseParser(object):
     """Class on which real-world parsers build
 
     Normally you use a sub-class of this class, such as

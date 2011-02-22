@@ -1,6 +1,6 @@
 """Utility to print Python code for a given generator object's element tokens"""
 import string
-class _GeneratorFormatter:
+class _GeneratorFormatter(object):
     """Singleton Class to give a generator's element tokens as a source string
 
     Call this as:
@@ -12,7 +12,7 @@ class _GeneratorFormatter:
 from simpleparse.objectgenerator import *
 GENERATOR = generator.Generator ()
 
-class Parser:
+class Parser(object):
     '''Mix-in class for simpleparse.parser.Parser which uses this GENERATOR
     to build tagging tables.  You'll likely want to override __init__ to avoid
     building a new parser from a grammar (or subclass BaseParser instead of

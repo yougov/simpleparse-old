@@ -1,7 +1,7 @@
 """Abstract representation of an in-memory grammar that generates parsers"""
 import traceback
 
-class Generator:
+class Generator(object):
     '''Abstract representation of an in-memory grammar that generates parsers
     
     The generator class manages a collection of
@@ -90,7 +90,7 @@ class Generator:
 ### Compatability API
 ##  This API exists to allow much of the code written with SimpleParse 1.0
 ##  to work with SimpleParse 2.0
-class GeneratorAPI1:
+class GeneratorAPI1(object):
     """Stand-in class supporting operation of SimpleParse 1.0 applications
 
     There was really only the one method of interest, parserbyname,
