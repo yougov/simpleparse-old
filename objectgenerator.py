@@ -183,14 +183,17 @@ class ElementToken( object ):
     def to_parser( self, generator=None, noReport=False ):
         # TODO: support noReport (copy self and return copy's final_method)
         return CallableParser( self.final_method( generator, noReport) )
+    _final_method = None
     def final_method( self, generator=None, noReport=False ):
-        if not self.generator:
-            self.generator = generator 
-        name = ['parse']
-        for attribute in ('negative','repeating','optional'):
-            if getattr( self, attribute ):
-                name.append( attribute )
-        return self._update( getattr( self, "_".join( name )), noReport=noReport)
+        if self._final_method is None:
+            if not self.generator:
+                self.generator = generator 
+            name = ['parse']
+            for attribute in ('negative','repeating','optional'):
+                if getattr( self, attribute ):
+                    name.append( attribute )
+            self._final_method = self._update( getattr( self, "_".join( name )), noReport=noReport)
+        return self._final_method
     def _update( self, final_parser, noReport=False ):
         def updater( state ):
             state.enter( self )
