@@ -1,9 +1,11 @@
-from simpleparse.objectgenerator import Literal
+from simpleparse.objectgenerator import Literal, Name
 
 def main():
-    a = Literal( 'a', repeating=True, optional=True, negative=True )
-    ap = a.to_parser()
-    print ap( 'b' * 1024 * 1024 * 2 )
+    a = Literal( 'a' )
+    n = Name( 'a', repeating=True )
+    n._target = a.final_method()
+    ap = n.to_parser()
+    print ap( 'a' * 1024 * 1024 )[-1]
 
 if __name__ == "__main__":
     main()
