@@ -1,9 +1,11 @@
-from simpleparse.objectgenerator import Literal, Name
+from simpleparse.objectgenerator import Literal, Name, Range, SequentialGroup
 
 def main():
-    a = Literal( 'a' )
+    r = Range( 'abc' )
+    b = Literal( 'a' )
+    b = SequentialGroup( [b,r])
     n = Name( 'a', repeating=True )
-    n._target = a.final_method()
+    n._target = b.final_method()
     ap = n.to_parser()
     print ap( 'a' * 1024 * 1024 )[-1]
 
