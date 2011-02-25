@@ -46,7 +46,7 @@ def dispatch( source, tag, buffer ):
     """
     try:
         function = getattr (source, tag[0])
-    except AttributeError:
+    except (AttributeError,TypeError):
         try:
             function = source[tag[0]]
         except:
