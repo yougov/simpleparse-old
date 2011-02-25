@@ -1,6 +1,8 @@
 """Pure-python implementation of ObjectGenerator classes"""
 from simpleparse.error import ParserSyntaxError
 
+EMPTY = None
+
 class CallableParser( object ):
     def __init__( self, grammar ):
         self.grammar = grammar 
@@ -14,6 +16,8 @@ class CallableParser( object ):
         except NoMatch, err:
             return (False,[],start)
         else:
+            if result is EMPTY:
+                result = []
             return (True,result,state.current)
 
 class State( object ):
@@ -116,26 +120,35 @@ class ElementToken( object ):
             return self.parse( state )
         except NoMatch, err:
             state.current = start
-            return []
+            return None
     def parse_repeating_optional( self, state ):
-        result = []
+        result = EMPTY
         while state.current < state.stop:
             try:
-                result.extend( self.parse( state ) )
+                new = self.parse( state )
             except NoMatch, err:
                 break
+            else:
+                if new is not EMPTY:
+                    if result is EMPTY:
+                        result = []
+                    result.extend( new )
         return result
     def parse_repeating( self, state ):
         """By default, run base parse until it fails, push all tokens to the stack"""
-        result = []
+        result = EMPTY
         found = False
         while state.current < state.stop:
             try:
-                match = self.parse( state )
-                result.extend( match )
-                found = True
+                new = self.parse( state )
             except NoMatch, err:
                 break
+            else:
+                found = True
+                if new is not EMPTY:
+                    if result is EMPTY:
+                        result = []
+                    result.extend( new )
         if not found:
             raise NoMatch( self, state )
         return result
@@ -145,7 +158,7 @@ class ElementToken( object ):
             self.parse( state )
         except (EOFReached,NoMatch), err:
             state.current += 1
-            return [ ]
+            return EMPTY
         else:
             state.current = start
             raise NoMatch( self, state )
@@ -153,9 +166,8 @@ class ElementToken( object ):
         try:
             return self.parse_negative( state )
         except NoMatch, err:
-            return []
+            return EMPTY
     def parse_negative_repeating( self, state ):
-        result = []
         start = stop = state.current
         while state.current < state.stop:
             try:
@@ -172,13 +184,13 @@ class ElementToken( object ):
                 break # fail due to match
         state.current = stop
         if stop > start:
-            return [ ]
+            return EMPTY
         raise NoMatch( self, state )
     def parse_negative_repeating_optional( self, state ):
         try:
             return self.parse_negative_repeating( state )
         except NoMatch, err:
-            return []
+            return EMPTY
 
     def to_parser( self, generator=None, noReport=False ):
         # TODO: support noReport (copy self and return copy's final_method)
@@ -247,7 +259,7 @@ class Literal( ElementToken ):
     def parse( self, state ):
         if state.buffer[state.current:state.current+self.length] == self.value :
             state.current = state.current + self.length
-            return []
+            return EMPTY
         elif state.current + self.length >= state.stop:
             raise EOFReached( self, state )
         else:
@@ -274,7 +286,7 @@ class CILiteral( ElementToken ):
         test = state.buffer[state.current:state.current+self.length]
         if test.lower() == self._lower:
             state.current = state.current + self.length
-            return []
+            return EMPTY
         elif state.current + self.length >= state.stop:
             raise EOFReached( self, state )
         else:
@@ -287,7 +299,7 @@ class Range( ElementToken ):
             raise EOFReached( state, self )
         if state.buffer[state.current] in self.value:
             state.current += 1
-            return []
+            return EMPTY
         else:
             raise NoMatch( self, state )
         
@@ -296,7 +308,7 @@ class Range( ElementToken ):
             raise EOFReached( state, self )
         if state.buffer[state.current] not in self.value:
             state.current += 1
-            return []
+            return EMPTY
         else:
             raise NoMatch( self, state )
     def parse_repeating( self, state ):
@@ -311,7 +323,7 @@ class Range( ElementToken ):
                 break 
         if current > start:
             state.current = current
-            return []
+            return EMPTY
         else:
             raise NoMatch( self, state )
     def parse_negative_repeating( self, state ):
@@ -326,7 +338,7 @@ class Range( ElementToken ):
                 break 
         if current > start:
             state.current = current
-            return []
+            return EMPTY
         else:
             raise NoMatch( self, state )
 
@@ -358,9 +370,13 @@ class SequentialGroup( Group ):
     """Parse a sequence of elements as a single token (with back-tracking)"""
     
     def parse( self, state ):
-        results = []
+        results = EMPTY
         for item in self.parsers:
-            results.extend( item( state ))
+            new = item(state)
+            if new is not EMPTY:
+                if results is EMPTY:
+                    results = []
+                results.extend( new )
         return results 
 class FirstOfGroup( Group ):
     def parse( self, state ):
@@ -374,7 +390,7 @@ class FirstOfGroup( Group ):
 class EOF( ElementToken ):
     def parse( self, state ):
         if state.current >= state.stop:
-            return []
+            return EMPTY
         raise NoMatch( self, state )
 
 class ErrorOnFail(object):
@@ -475,10 +491,12 @@ class Name( ElementToken ):
         if self.report_child:
             if self.value and not self.expand_child:
                 if self.lookahead or stop > start:
+                    if result is EMPTY:
+                        result = []
                     result = [ Match( self,state, start=start, stop=stop, children = result ) ]
             return result 
         else:
-            return []
+            return EMPTY
 
 class LibraryElement( ElementToken ):
     """Holder for a prebuilt item with it's own generator"""
@@ -520,4 +538,4 @@ class LibraryElement( ElementToken ):
                         result = [ Match( self,state, start=start, stop=stop, children = result ) ]
                 return result 
             else:
-                return []
+                return EMPTY
