@@ -217,12 +217,7 @@ class Updater( object ):
 
 class UpdateStandard( Updater ):
     def __call__( self, buffer,start,stop,current ):
-        original = current
-        try:
-            return self.final_parser( buffer,start,stop,current )
-        except NoMatch, err:
-            current = start 
-            raise
+        return self.final_parser( buffer,start,stop,current )
 class UpdateErrorOnFail( Updater ):
     def __init__( self, final_parser, token, errorOnFail ):
         super( UpdateErrorOnFail, self ).__init__( final_parser, token )
