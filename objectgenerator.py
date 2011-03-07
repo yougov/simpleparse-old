@@ -207,26 +207,16 @@ class ElementToken( object ):
             self._final_method = self._update( getattr( self, "_".join( name )), noReport=noReport)
         return self._final_method
     def _update( self, final_parser, noReport=False ):
-        def updater( state ):
-            state.enter( self )
-            start = state.current
-            try:
-                try:
-                    result = final_parser( state )
-                except NoMatch, err:
-                    if self.errorOnFail:
-                        self.errorOnFail( state )
-                    else:
-                        state.current = start
-                        raise
-                if self.lookahead:
-                    # does not advance...
-                    state.current = start
-                return result 
-            finally:
-                state.exit( self )
-        updater.__name__ = '%s_%s'%( self.__class__.__name__, final_parser.__name__)
-        updater.__doc__ = final_parser.__doc__
+        if self.errorOnFail:
+            if self.lookahead:
+                updater = UpdateErrorOnFailLookahead( final_parser, self, self.errorOnFail )
+            else:
+                updater = UpdateErrorOnFail( final_parser, self, self.errorOnFail )
+        else:
+            if self.lookahead:
+                updater = UpdateLookahead( final_parser, self )
+            else:
+                updater = UpdateStandard( final_parser, self )
         return updater
     def __repr__( self ):
         return '%s(value=%r,report=%r,negative=%r,optional=%r,repeating=%r,expanded=%r,lookahead=%r )'%(
@@ -239,6 +229,65 @@ class ElementToken( object ):
             self.expanded,
             self.lookahead,
         )
+
+class Updater( object ):
+    """Base class for the various updater algorithms"""
+    def __init__( self, final_parser, token ):
+        self.final_parser = final_parser
+        self.token = token
+    def __call__( self, state ):
+        raise NotImplementedError("Updater class %s needs a __call__ method"%(self.__class__.__name__,))
+
+class UpdateStandard( Updater ):
+    def __call__( self, state ):
+        start = state.current
+        try:
+            return self.final_parser( state )
+        except NoMatch, err:
+            state.current = start 
+            raise
+class UpdateErrorOnFail( Updater ):
+    def __init__( self, final_parser, token, errorOnFail ):
+        super( UpdateErrorOnFail, self ).__init__( final_parser, token )
+        self.errorOnFail = errorOnFail
+    def __call__( self, state ):
+        try:
+            return self.final_parser( state )
+        except NoMatch, err:
+            return self.errorOnFail( state )
+class UpdateLookahead( Updater ):
+    def __call__( self, state ):
+        start = state.current
+        try:
+            try:
+                result =  self.final_parser( state )
+            except NoMatch, err:
+                raise 
+            else:
+                return result
+        finally:
+            state.current = start
+class UpdateErrorOnFailLookahead( UpdateLookahead, UpdateErrorOnFail ):
+    """Combines both types of update customization"""
+    def __call__( self, state ):
+        start = state.current
+        try:
+            try:
+                result = self.final_parser( state )
+            except NoMatch, err:
+                return self.errorOnFail( state )
+            else:
+                return result
+        finally:
+            state.current = start
+
+class UpdateLookahead( Updater ):
+    def __call__( self, state ):
+        start = state.current
+        try:
+            return self.final_parser( state )
+        finally:
+            state.current = start
 
 class Literal( ElementToken ):
     def __init__( 
@@ -360,10 +409,11 @@ class Group( ElementToken ):
         self.parsers = None
     
     def final_method( self, generator=None, noReport=False ):
-        self.parsers = [ 
-            item.final_method( generator=generator, noReport=noReport ) 
-            for item in self.value
-        ]
+        if not self._final_method:
+            self.parsers = [ 
+                item.final_method( generator=generator, noReport=noReport ) 
+                for item in self.value
+            ]
         return super( Group, self ).final_method( generator, noReport )
 
 class SequentialGroup( Group ):
@@ -471,7 +521,8 @@ class Name( ElementToken ):
     _target = None 
     @property
     def target( self ):
-        if not self._target:
+        current = self._target
+        if not current:
             element = self.generator.get( self.value )
             if element is None:
                 raise RuntimeError( """Undefined production: %s"""%( self.value, ))
@@ -479,10 +530,10 @@ class Name( ElementToken ):
             # if we point to an expanded or non-reporting "table", adopt those features.
             self.report_child = element.report and self.report
             self.expand_child = element.expanded
-            self._target = element.final_method( 
+            self._target = current = element.final_method( 
                 generator = self.generator,
             )
-        return self._target
+        return current
     def parse( self, state ):
         """Implement wrapping of results for name references"""
         start = state.current
@@ -491,8 +542,6 @@ class Name( ElementToken ):
         if self.report_child:
             if self.value and not self.expand_child:
                 if self.lookahead or stop > start:
-                    if result is EMPTY:
-                        result = []
                     result = [ Match( self,state, start=start, stop=stop, children = result ) ]
             return result 
         else:
