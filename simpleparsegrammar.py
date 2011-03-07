@@ -471,8 +471,9 @@ class SPGrammarProcessor( DispatchProcessor ):
         for (name, table) in prebuilts:
             if isinstance( table, ElementToken):
                 self.generator.addDefinition( name, table)
+            # otherwise, should be a callable...
             else:
-                self.generator.addDefinition( name, Prebuilt(value=table))
+                raise RuntimeError( "Do not support prebuilts in pure-python yet" )
         for source in definitionSources:
             self.generator.addDefinitionSource( source )
     
