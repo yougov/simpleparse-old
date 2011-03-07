@@ -229,12 +229,8 @@ class UpdateErrorOnFail( Updater ):
             return self.errorOnFail( buffer,start,stop,current )
 class UpdateLookahead( Updater ):
     def __call__( self, buffer,start,stop,current ):
-        try:
-            _,result =  self.final_parser( buffer,start,stop,current )
-        except NoMatch, err:
-            raise 
-        else:
-            return current,result
+        _,result =  self.final_parser( buffer,start,stop,current )
+        return current,result
 class UpdateErrorOnFailLookahead( UpdateLookahead, UpdateErrorOnFail ):
     """Combines both types of update customization"""
     def __call__( self, buffer,start,stop,current ):
