@@ -35,17 +35,7 @@ class State( object ):
         if stop < start:
             raise ValueError( "stop < start", stop, start )
         self.stop = stop
-        self.stack = []
         self.generator = generator
-    def enter( self, token ):
-        """Enter parsing of the given (grouping) element token (save internal state)"""
-        self.stack.append( token )
-    def exit( self, token ):
-        """Exit parsing of the given (grouping) element token (pop internal state)"""
-        try:
-            token = self.stack.pop( )
-        except IndexError, err:
-            raise RuntimeError( """Unbalanced calls to enter/exit on %s""", token )
 
 class Match( object ):
     """A token generated during a parse
