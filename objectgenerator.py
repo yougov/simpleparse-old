@@ -378,13 +378,14 @@ class SequentialGroup( Group ):
                 results.extend( new )
         return current,results 
 class FirstOfGroup( Group ):
-    def parse( self, buffer,start,stop,current ):
-        for item in self.parsers:
-            try: 
-                return item( buffer,start,stop,current )
+    def parse( self, buffer,start,stop,current, where=0):
+        if where >= len(self.parsers):
+            raise NoMatch( self, buffer,start,stop,current )
+        else:
+            try:
+                return self.parsers[where]( buffer,start,stop,current )
             except NoMatch, err:
-                pass
-        raise NoMatch( self, buffer,start,stop,current )
+                return self.parse(buffer, start, stop, current, where+1)
 
 class EOF( ElementToken ):
     def parse( self, buffer,start,stop,current ):
