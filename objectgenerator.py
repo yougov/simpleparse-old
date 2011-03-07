@@ -486,12 +486,7 @@ class Name( ElementToken ):
     def parse( self, buffer,start,stop,current ):
         """Implement wrapping of results for name references"""
         original = current
-        try:
-            
-            current,result = self.target( buffer,start,stop,current )
-        except TypeError, err:
-            import pdb 
-            pdb.set_trace()
+        current,result = self.target( buffer,start,stop,current )
         if self.report_child:
             if self.value and not self.expand_child:
                 if self.lookahead or current > original:
