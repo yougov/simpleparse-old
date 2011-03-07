@@ -47,7 +47,8 @@ ESCAPEDCHAR    := '\\"'/'\134\134'
 def buildVRMLParser( declaration = VRMLPARSERDEF ):
     return Parser( declaration, "vrmlScene" )
 
-if __name__ == "__main__":
+def main():
+    """Main operation of the test"""
     import os, sys, time
     if sys.argv[1:]:
         filename = sys.argv[1]
@@ -57,4 +58,6 @@ if __name__ == "__main__":
         success, tags, next = parser.parse( data)
         d = time.time()-t
         print "parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) )
-    
+    return 0
+if __name__ == "__main__":
+    main()
