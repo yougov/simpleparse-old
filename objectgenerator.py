@@ -6,51 +6,41 @@ EMPTY = None
 class CallableParser( object ):
     def __init__( self, grammar ):
         self.grammar = grammar 
-    def __call__( self, content, start=0, stop=None, *args, **named ):
-        if not isinstance( content, State ):
-            state = State( content, start, stop, *args, **named )
-        else:
-            state = content
+    def __call__( self, buffer, start=0, stop=None, current=None, *args, **named ):
+        if stop is None:
+            stop = len(buffer)
+        if current is None:
+            current = start
+        if start < 0:
+            start = len(buffer) + start 
+            if start < 0:
+                start = 0
+        if stop < 0:
+            stop = stop + len(buffer)
+            if stop < start:
+                stop = start
         try:
-            result = self.grammar( state )
+            current,result = self.grammar( buffer, start, stop, current )
         except NoMatch, err:
             return (False,[],start)
         else:
             if result is EMPTY:
                 result = []
-            return (True,result,state.current)
-
-class State( object ):
-    """Parser state for a parsing run"""
-    def __init__( self, buffer, start=0, stop=None, generator=None ):
-        self.buffer = buffer 
-        self.start = start 
-        self.current = start
-        if stop is None:
-            stop = len(buffer)
-        if stop < 0:
-            stop = 0
-        if stop > len(buffer):
-            stop = len(buffer)
-        if stop < start:
-            raise ValueError( "stop < start", stop, start )
-        self.stop = stop
-        self.generator = generator
+            return (True,result,current)
 
 class Match( object ):
     """A token generated during a parse
     
     token -- the token which matched 
     tag -- the tag (token.value) which matched 
-    state -- the state object against which we matched 
     start -- the index at which the match started 
     children -- the children (if any) of the match
     """
-    def __init__( self, token, state,start=None,stop=None,children=None ):
+    def __init__( self, token,start=None,stop=None,current=None,children=None ):
         self.tag = token.value 
-        self.state = state 
         self.start = start 
         self.stop = stop
+        self.current = current
         self.children = children
     def __len__( self ):
         return 4
@@ -101,21 +91,19 @@ class ElementToken( object ):
         self.lookahead = lookahead 
         self.generator = generator
 
-    def parse( self, state ):
+    def parse( self, buffer,start,stop,current ):
         raise NotImplementedError( self, 'parse' )
-    def parse_optional( self, state ):
+    def parse_optional( self,buffer,start,stop,current ):
         """By default, run the base parse and consider failure success"""
-        start = state.current
         try:
-            return self.parse( state )
+            return self.parse( buffer,start,stop,current )
         except NoMatch, err:
-            state.current = start
-            return None
-    def parse_repeating_optional( self, state ):
+            return current,EMPTY
+    def parse_repeating_optional( self, buffer,start,stop,current ):
         result = EMPTY
-        while state.current < state.stop:
+        while current < stop:
             try:
-                new = self.parse( state )
+                current,new = self.parse( buffer,start,stop,current )
             except NoMatch, err:
                 break
             else:
@@ -123,14 +111,14 @@ class ElementToken( object ):
                     if result is EMPTY:
                         result = []
                     result.extend( new )
-        return result
-    def parse_repeating( self, state ):
+        return current,result
+    def parse_repeating( self, buffer,start,stop,current ):
         """By default, run base parse until it fails, push all tokens to the stack"""
         result = EMPTY
         found = False
-        while state.current < state.stop:
+        while current < stop:
             try:
-                new = self.parse( state )
+                current,new = self.parse( buffer,start,stop,current )
             except NoMatch, err:
                 break
             else:
@@ -140,47 +128,46 @@ class ElementToken( object ):
                         result = []
                     result.extend( new )
         if not found:
-            raise NoMatch( self, state )
-        return result
-    def parse_negative( self, state ):
-        start = state.current
+            raise NoMatch( self, buffer,start,stop,current )
+        return current,result
+    def parse_negative( self, buffer,start,stop,current ):
+        original = current
         try:
-            self.parse( state )
+            self.parse( buffer,start,stop,current )
         except (EOFReached,NoMatch), err:
-            state.current += 1
-            return EMPTY
+            current += 1
+            return current,EMPTY
         else:
-            state.current = start
-            raise NoMatch( self, state )
-    def parse_negative_optional( self, state ):
+            raise NoMatch( self, buffer,start,stop,original )
+    def parse_negative_optional( self, buffer,start,stop,current ):
         try:
-            return self.parse_negative( state )
+            return self.parse_negative( buffer,start,stop,current )
         except NoMatch, err:
-            return EMPTY
-    def parse_negative_repeating( self, state ):
-        start = stop = state.current
-        while state.current < state.stop:
+            return current,EMPTY
+    def parse_negative_repeating( self, buffer,start,stop,current ):
+        original = final = current
+        while current < stop:
             try:
-                self.parse( state )
+                self.parse( buffer,start,stop,current )
             except EOFReached, err:
                 # child can read EOF before we do...
-                stop += 1
-                if stop >= state.stop:
+                final += 1
+                if final >= stop:
                     break
             except NoMatch, err:
-                stop += 1
-                state.current += 1
+                final += 1
+                current += 1
             else:
                 break # fail due to match
-        state.current = stop
-        if stop > start:
-            return EMPTY
-        raise NoMatch( self, state )
-    def parse_negative_repeating_optional( self, state ):
+        current = final
+        if final > original:
+            return current,EMPTY
+        raise NoMatch( self, buffer,start,stop,current )
+    def parse_negative_repeating_optional( self, buffer,start,stop,current ):
         try:
-            return self.parse_negative_repeating( state )
+            return self.parse_negative_repeating( buffer,start,stop,current )
         except NoMatch, err:
-            return EMPTY
+            return current,EMPTY
 
     def to_parser( self, generator=None, noReport=False ):
         # TODO: support noReport (copy self and return copy's final_method)
@@ -225,59 +212,48 @@ class Updater( object ):
     def __init__( self, final_parser, token ):
         self.final_parser = final_parser
         self.token = token
-    def __call__( self, state ):
+    def __call__( self, buffer,start,stop,current ):
         raise NotImplementedError("Updater class %s needs a __call__ method"%(self.__class__.__name__,))
 
 class UpdateStandard( Updater ):
-    def __call__( self, state ):
-        start = state.current
+    def __call__( self, buffer,start,stop,current ):
+        original = current
         try:
-            return self.final_parser( state )
+            return self.final_parser( buffer,start,stop,current )
         except NoMatch, err:
-            state.current = start 
+            current = start 
             raise
 class UpdateErrorOnFail( Updater ):
     def __init__( self, final_parser, token, errorOnFail ):
         super( UpdateErrorOnFail, self ).__init__( final_parser, token )
         self.errorOnFail = errorOnFail
-    def __call__( self, state ):
+    def __call__( self, buffer,start,stop,current ):
         try:
-            return self.final_parser( state )
+            return self.final_parser( buffer,start,stop,current )
         except NoMatch, err:
-            return self.errorOnFail( state )
+            return self.errorOnFail( buffer,start,stop,current )
 class UpdateLookahead( Updater ):
-    def __call__( self, state ):
-        start = state.current
+    def __call__( self, buffer,start,stop,current ):
         try:
-            try:
-                result =  self.final_parser( state )
-            except NoMatch, err:
-                raise 
-            else:
-                return result
-        finally:
-            state.current = start
+            _,result =  self.final_parser( buffer,start,stop,current )
+        except NoMatch, err:
+            raise 
+        else:
+            return current,result
 class UpdateErrorOnFailLookahead( UpdateLookahead, UpdateErrorOnFail ):
     """Combines both types of update customization"""
-    def __call__( self, state ):
-        start = state.current
+    def __call__( self, buffer,start,stop,current ):
         try:
-            try:
-                result = self.final_parser( state )
-            except NoMatch, err:
-                return self.errorOnFail( state )
-            else:
-                return result
-        finally:
-            state.current = start
+            _,result = self.final_parser( buffer,start,stop,current )
+        except NoMatch, err:
+            return self.errorOnFail( buffer,start,stop,current )
+        else:
+            return current,result
 
 class UpdateLookahead( Updater ):
-    def __call__( self, state ):
-        start = state.current
-        try:
-            return self.final_parser( state )
-        finally:
-            state.current = start
+    def __call__( self, buffer,start,stop,current ):
+        _,result = self.final_parser( buffer,start,stop,current )
+        return current,result
 
 class Literal( ElementToken ):
     def __init__( 
@@ -295,14 +271,14 @@ class Literal( ElementToken ):
             value,negative,optional,repeating,report,errorOnFail,expanded,lookahead,generator 
         )
         self.length = len(self.value)
-    def parse( self, state ):
-        if state.buffer[state.current:state.current+self.length] == self.value :
-            state.current = state.current + self.length
-            return EMPTY
-        elif state.current + self.length >= state.stop:
-            raise EOFReached( self, state )
+    def parse( self, buffer,start,stop,current ):
+        end_of_me = current+self.length
+        if buffer[current:end_of_me] == self.value :
+            return end_of_me,EMPTY
+        elif end_of_me >= stop:
+            raise EOFReached( self, buffer,start,stop,current )
         else:
-            raise NoMatch( self, state )
+            raise NoMatch( self, buffer,start,stop,current )
 class CILiteral( ElementToken ):
     def __init__( 
         self, value, 
@@ -321,65 +297,57 @@ class CILiteral( ElementToken ):
         self.value = value
         self.length = len(value)
         self._lower = value.lower()
-    def parse( self, state ):
-        test = state.buffer[state.current:state.current+self.length]
+    def parse( self, buffer,start,stop,current ):
+        end_of_me = current+self.length
+        test = buffer[current:end_of_me]
         if test.lower() == self._lower:
-            state.current = state.current + self.length
-            return EMPTY
-        elif state.current + self.length >= state.stop:
-            raise EOFReached( self, state )
+            return end_of_me,EMPTY
+        elif end_of_me >= stop:
+            raise EOFReached( self, buffer,start,stop,current )
         else:
-            raise NoMatch( self, state )
+            raise NoMatch( self, buffer,start,stop,current )
 
 class Range( ElementToken ):
     """Match a range (set of ranges) of characters"""
-    def parse( self, state ):
-        if state.current >= state.stop:
-            raise EOFReached( state, self )
-        if state.buffer[state.current] in self.value:
-            state.current += 1
-            return EMPTY
+    def parse( self, buffer,start,stop,current ):
+        if current >= stop:
+            raise EOFReached( self, buffer,start,stop,current )
+        if buffer[current] in self.value:
+            return current+1, EMPTY
         else:
-            raise NoMatch( self, state )
+            raise NoMatch( self, buffer,start,stop,current )
         
-    def parse_negative( self, state ):
-        if state.current >= state.stop:
-            raise EOFReached( state, self )
-        if state.buffer[state.current] not in self.value:
-            state.current += 1
-            return EMPTY
+    def parse_negative( self, buffer,start,stop,current ):
+        if current >= stop:
+            raise EOFReached( self,buffer,start,stop,current )
+        if buffer[current] not in self.value:
+            return current+1,EMPTY
         else:
-            raise NoMatch( self, state )
-    def parse_repeating( self, state ):
-        current = start = state.current 
-        stop = state.stop 
-        content = state.buffer
+            raise NoMatch( self,buffer,start,stop,current )
+    def parse_repeating( self, buffer,start,stop,current ):
+        original = current 
         set = self.value
         while current < stop:
-            if content[current] in self.value:
+            if buffer[current] in self.value:
                 current += 1
             else:
                 break 
-        if current > start:
-            state.current = current
-            return EMPTY
+        if current > original:
+            return current,EMPTY
         else:
-            raise NoMatch( self, state )
-    def parse_negative_repeating( self, state ):
-        current = start = state.current 
-        stop = state.stop 
-        content = state.buffer
+            raise NoMatch( self, buffer,start,stop,current )
+    def parse_negative_repeating( self, buffer,start,stop,current ):
+        original = current 
         set = self.value
         while current < stop:
-            if content[current] not in set:
+            if buffer[current] not in set:
                 current += 1
             else:
                 break 
-        if current > start:
-            state.current = current
-            return EMPTY
+        if current > original:
+            return current,EMPTY
         else:
-            raise NoMatch( self, state )
+            raise NoMatch( self, buffer,start,stop,current )
 
 class Group( ElementToken ):
     def __init__( 
@@ -409,29 +377,29 @@ class Group( ElementToken ):
 class SequentialGroup( Group ):
     """Parse a sequence of elements as a single token (with back-tracking)"""
     
-    def parse( self, state ):
+    def parse( self, buffer,start,stop,current ):
         results = EMPTY
         for item in self.parsers:
-            new = item(state)
+            current,new = item(buffer,start,stop,current)
             if new is not EMPTY:
                 if results is EMPTY:
                     results = []
                 results.extend( new )
-        return results 
+        return current,results 
 class FirstOfGroup( Group ):
-    def parse( self, state ):
+    def parse( self, buffer,start,stop,current ):
         for item in self.parsers:
             try: 
-                return item( state )
+                return item( buffer,start,stop,current )
             except NoMatch, err:
                 pass
-        raise NoMatch( self, state )
+        raise NoMatch( self, buffer,start,stop,current )
 
 class EOF( ElementToken ):
-    def parse( self, state ):
-        if state.current >= state.stop:
-            return EMPTY
-        raise NoMatch( self, state )
+    def parse( self, buffer,start,stop,current ):
+        if current >= stop:
+            return current,EMPTY
+        raise NoMatch( self, buffer,start,stop,current )
 
 class ErrorOnFail(object):
     """When called as a matching function, raises a SyntaxError
@@ -458,14 +426,14 @@ class ErrorOnFail(object):
         self.production = production
         self.message = message 
         self.expected = expected
-    def __call__( self, state ):
+    def __call__( self, buffer,start,stop,current ):
         """Method called if our attached production fails"""
         error = ParserSyntaxError( self.message )
         error.error_message = self.message
         error.production = self.production
         error.expected= self.expected
-        error.buffer = state.buffer
-        error.position = state.current
+        error.buffer = buffer
+        error.position = current
         raise error
     def copy( self ):
         import copy
@@ -524,18 +492,22 @@ class Name( ElementToken ):
                 generator = self.generator,
             )
         return current
-    def parse( self, state ):
+    def parse( self, buffer,start,stop,current ):
         """Implement wrapping of results for name references"""
-        start = state.current
-        result = self.target( state )
-        stop = state.current
+        original = current
+        try:
+            
+            current,result = self.target( buffer,start,stop,current )
+        except TypeError, err:
+            import pdb 
+            pdb.set_trace()
         if self.report_child:
             if self.value and not self.expand_child:
-                if self.lookahead or stop > start:
-                    result = [ Match( self,state, start=start, stop=stop, children = result ) ]
-            return result 
+                if self.lookahead or current > original:
+                    result = [ Match( self,start=original, stop=current, children = result ) ]
+            return current,result 
         else:
-            return EMPTY
+            return current,EMPTY
 
 class LibraryElement( ElementToken ):
     """Holder for a prebuilt item with it's own generator"""
@@ -564,17 +536,17 @@ class LibraryElement( ElementToken ):
             self.report_child = element.report and self.report
             self.expand_child = True
         return self._target
-    def parse( self, state ):
+    def parse( self, buffer,start,stop,current ):
         """Implement expanded references for library elements"""
-        start = state.current
-        success,result,stop = self.target( state )
+        original = current
+        success,result,current = self.target( buffer,start,stop,current )
         if not success:
-            raise NoMatch( self, state )
+            raise NoMatch( self, buffer,start,stop,current )
         else:
             if self.report_child:
                 if self.value and not self.expand_child:
-                    if self.lookahead or stop > start:
-                        result = [ Match( self,state, start=start, stop=stop, children = result ) ]
-                return result 
+                    if self.lookahead or stop > original:
+                        result = [ Match( self,start=original, stop=current, children = result ) ]
+                return current,result 
             else:
-                return EMPTY
+                return current,EMPTY
