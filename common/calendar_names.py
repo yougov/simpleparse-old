@@ -49,8 +49,8 @@ def _build( name, set ):
     set.reverse()
     l,u,r = [],[],[]
     for item in set:
-        l.append( objectgenerator.Literal( value = string.lower(item) ))
-        u.append( objectgenerator.Literal( value = string.upper(item) ))
+        l.append( objectgenerator.Literal( value = item.lower() ))
+        u.append( objectgenerator.Literal( value = item.upper() ))
         r.append( objectgenerator.Literal( value = item ))
     c[ name + '_lc' ] = objectgenerator.FirstOfGroup( children = l )
     c[ name + '_uc' ] = objectgenerator.FirstOfGroup( children = u )
@@ -63,11 +63,10 @@ _build( 'locale_day_abbrs', da )
 _build( 'locale_month_names', mn )
 _build( 'locale_month_abbrs', ma )
 
-da = map(string.lower, da )
-dn = map(string.lower, dn )
-ma = map(string.lower, ma )
-mn = map(string.lower, mn )
-
+da = [x.lower() for x in da ]
+dn = [x.lower() for x in dn ]
+ma = [x.lower() for x in ma ]
+mn = [x.lower() for x in mn ]
 
 common.share( c )
 
@@ -76,7 +75,7 @@ class NameInterpreter(object):
     def __init__( self, offset = 1 ):
         self.offset = offset
     def __call__( self, (tag, left, right, children), buffer ):
-        value = string.lower( buffer[left:right] )
+        value = buffer[left:right].lower()
         for table in self.tables:
             try:
                 return table.index( value )+ self.offset

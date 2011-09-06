@@ -5,7 +5,7 @@ from simpleparse.error import ParserSyntaxError
 class ErrorOnFailTests( unittest.TestCase ):
     """Tests of the error-on failure mechanisms"""
     def shouldRaise(self, definition, parserName, testValue, ):
-        self.failUnlessRaises( ParserSyntaxError,  Parser( definition).parse, testValue, parserName )
+        self.assertRaises( ParserSyntaxError,  Parser( definition).parse, testValue, parserName )
     def shouldNotRaise(self, definition, parserName, testValue, ):
         success,result, next = Parser( definition).parse( testValue, parserName )
         assert success, """Didn't parse %s (error on fail test for definition %s)"""%( repr(testValue), repr(definition))

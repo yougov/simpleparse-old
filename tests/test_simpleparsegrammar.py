@@ -21,7 +21,7 @@ class ParserGenerationTests(unittest.TestCase):
             <something> := [ab]''',
             's',
             'mmmab',
-            (1,[],3)
+            (True,[],3)
         )
     def testGenNegRange2( self ):
         self.doBasicTest(
@@ -29,7 +29,7 @@ class ParserGenerationTests(unittest.TestCase):
             <something> := [ab]''',
             's',
             'mmmab',
-            (1,[],1)
+            (True,[],1)
         )
     def testGenNegLit1( self ):
         self.doBasicTest(
@@ -37,7 +37,7 @@ class ParserGenerationTests(unittest.TestCase):
             <something> := "a"''',
             's',
             'mmmab',
-            (1,[],3)
+            (True,[],3)
         )
     def testGenPosReptOpt1( self ):
         self.doBasicTest(
@@ -45,7 +45,7 @@ class ParserGenerationTests(unittest.TestCase):
             something := "a" ''',
             's',
             'aammmab',
-            (1,[("something",0,1,NullResult),("something",1,2,NullResult)],2)
+            (True,[("something",0,1,NullResult),("something",1,2,NullResult)],2)
         )
     def testGenPosReptOpt2( self ):
         self.doBasicTest(
@@ -53,7 +53,7 @@ class ParserGenerationTests(unittest.TestCase):
             something := "a" ''',
             's',
             'mmmab',
-            (1,[],0)
+            (True,[],0)
         )
     def testGenPosRept1( self ):
         self.doBasicTest(
@@ -70,7 +70,7 @@ class ParserGenerationTests(unittest.TestCase):
             ''',
             's',
             'bbbba',
-            (1,[
+            (True,[
             ],0)
         )
     def testLookaheadNeg( self ):
@@ -88,7 +88,7 @@ class ParserGenerationTests(unittest.TestCase):
             ''',
             's',
             'bbbba',
-            (1,[
+            (True,[
             ],0)
         )
     def testLookaheadNeg3( self ):
@@ -97,7 +97,7 @@ class ParserGenerationTests(unittest.TestCase):
             ''',
             's',
             'bbbba',
-            (1,[
+            (True,[
             ],1)
         )
     def testLookaheadNeg4( self ):
@@ -106,7 +106,7 @@ class ParserGenerationTests(unittest.TestCase):
             ''',
             's',
             'bba',
-            (1,[
+            (True,[
             ],3)
         )
     def testLookaheadNeg5( self ):
@@ -116,7 +116,7 @@ class ParserGenerationTests(unittest.TestCase):
             ''',
             's',
             'bac',
-            (1,[
+            (True,[
             ],2)
         )
     def testLookaheadNeg6( self ):
@@ -137,7 +137,7 @@ class ParserGenerationTests(unittest.TestCase):
             ''',
             's',
             'bbbba',
-            (1,[
+            (True,[
                 ("something",0,1,NullResult),
                 ("something",1,2,NullResult),
                 ("something",2,3,NullResult),
@@ -151,7 +151,7 @@ class ParserGenerationTests(unittest.TestCase):
             ''',
             's',
             'badba',
-            (1,[
+            (True,[
                 ("trailer",0,3,NullResult),
             ],0)
         )
@@ -162,7 +162,7 @@ class ParserGenerationTests(unittest.TestCase):
             ''',
             's',
             'badba',
-            (1,[
+            (True,[
             ],0)
         )
 
@@ -173,7 +173,7 @@ class ParserGenerationTests(unittest.TestCase):
             ''',
             's',
             'babba',
-            (1,[
+            (True,[
             ],2)
         )
     def testLookahead6( self ):
@@ -201,7 +201,7 @@ class ParserGenerationTests(unittest.TestCase):
             something := "a" ''',
             's',
             'ammmab',
-            (1,[('something',0,1,NullResult),],1)
+            (True,[('something',0,1,NullResult),],1)
         )
 
     def testOptionalGroupHitEOF( self ):
@@ -211,7 +211,7 @@ class ParserGenerationTests(unittest.TestCase):
             something := ("a"/"b") ''',
             's',
             'aa',
-            (1,[
+            (True,[
                 ('something',0,1,NullResult),
                 ('something',1,2,NullResult),
             ],2)
@@ -227,7 +227,7 @@ class ParserGenerationTests(unittest.TestCase):
             ) ''',
             's',
             'aa',
-            (1,[
+            (True,[
                 ('something',0,1,NullResult),
                 ('something',1,2,NullResult),
             ],2)
@@ -243,7 +243,7 @@ class ParserGenerationTests(unittest.TestCase):
 ##			''',
 ##			"file",
 ##			"\\*\\test sdf ff f f sdfff\\",
-##			(1, [
+##			(True, [
 ##				("controlword", 0,7,[]),
 ##				("contents",7,24),
 ##			],24),
@@ -254,42 +254,42 @@ class ParserGenerationTests(unittest.TestCase):
             '''s := c"this"''',
             's',
             'this',
-            (1,[],4)
+            (True,[],4)
         )
     def testGenCILiteral2( self ):
         self.doBasicTest(
             '''s := c"this"''',
             's',
             'This',
-            (1,[],4)
+            (True,[],4)
         )
     def testGenCILiteral3( self ):
         self.doBasicTest(
             '''s := c"this"''',
             's',
             'THIS',
-            (1,[],4)
+            (True,[],4)
         )
     def testGenCILiteral4( self ):
         self.doBasicTest(
             '''s := -c"this"''',
             's',
             ' THIS',
-            (1,[],1)
+            (True,[],1)
         )
     def testGenCILiteral5( self ):
         self.doBasicTest(
             '''s := -c"this"''',
             's',
             ' thi',
-            (1,[],1)
+            (True,[],1)
         )
     def testGenCILiteral6( self ):
         self.doBasicTest(
             '''s := -c"this"*''',
             's',
             ' thi',
-            (1,[],4)
+            (True,[],4)
         )
 
 class NameTests(unittest.TestCase):
@@ -302,7 +302,7 @@ class NameTests(unittest.TestCase):
             something := "a" ''',
             's',
             'ammmab',
-            (1,[('something',0,1,NullResult),],1)
+            (True,[('something',0,1,NullResult),],1)
         )
     def test_po( self ):
         self.doBasicTest(
@@ -310,7 +310,7 @@ class NameTests(unittest.TestCase):
             something := "a" ''',
             's',
             'ammmab',
-            (1,[('something',0,1,NullResult),],1)
+            (True,[('something',0,1,NullResult),],1)
         )
     def test_por( self ):
         self.doBasicTest(
@@ -318,7 +318,7 @@ class NameTests(unittest.TestCase):
             something := "a" ''',
             's',
             'ammmab',
-            (1,[('something',0,1,NullResult),],1)
+            (True,[('something',0,1,NullResult),],1)
         )
     def test_pr( self ):
         self.doBasicTest(
@@ -326,7 +326,7 @@ class NameTests(unittest.TestCase):
             something := "a" ''',
             's',
             'ammmab',
-            (1,[('something',0,1,NullResult),],1)
+            (True,[('something',0,1,NullResult),],1)
         )
 
     def test_n( self ):
@@ -335,7 +335,7 @@ class NameTests(unittest.TestCase):
             <something> := [ab]''',
             's',
             'mmmab',
-            (1,[],1)
+            (True,[],1)
         )
     def test_no( self ):
         self.doBasicTest(
@@ -343,7 +343,7 @@ class NameTests(unittest.TestCase):
             <something> := [ab]''',
             's',
             'mmmab',
-            (1,[],1)
+            (True,[],1)
         )
     def test_nor( self ):
         self.doBasicTest(
@@ -351,7 +351,7 @@ class NameTests(unittest.TestCase):
             <something> := [ab]''',
             's',
             'mmmab',
-            (1,[],3)
+            (True,[],3)
         )
     def test_nr( self ):
         self.doBasicTest(
@@ -359,7 +359,7 @@ class NameTests(unittest.TestCase):
             <something> := [ab]''',
             's',
             'mmmab',
-            (1,[],3)
+            (True,[],3)
         )
     def test_n_f( self ):
         self.doBasicTest(
@@ -375,7 +375,7 @@ class NameTests(unittest.TestCase):
             <something> := [ab]''',
             's',
             'ammmab',
-            (1,[],0)
+            (True,[],0)
         )
     def test_nor_f( self ):
         self.doBasicTest(
@@ -383,7 +383,7 @@ class NameTests(unittest.TestCase):
             <something> := [ab]''',
             's',
             'ammmab',
-            (1,[],0)
+            (True,[],0)
         )
     def test_nr_f( self ):
         self.doBasicTest(
@@ -404,7 +404,7 @@ class NameTests(unittest.TestCase):
 ##			something := "a" ''',
 ##			's',
 ##			'a'*1000000,
-##			(1,[
+##			(True,[
 ##			],1000000)
 ##		)
 
@@ -425,7 +425,7 @@ class NameTests(unittest.TestCase):
             ''',
             's',
             'abammmab',
-            (1,[
+            (True,[
                 ('r',0,1, NullResult),
                 ('r',1,2, NullResult),
                 ('r',2,3, NullResult),
@@ -445,7 +445,7 @@ class NameTests(unittest.TestCase):
             r := [ab]''',
             'something',
             'abammmab',
-            (1,[
+            (True,[
                 ('r',0,1, NullResult),
             ],1)
         )
@@ -489,7 +489,7 @@ class NameTests(unittest.TestCase):
 #            x := c*
 #            c := 'c'
 #        """, 'x', 'ccc', source)
-#        assert result == (1,[
+#        assert result == (True,[
 #            'c','c','c',
 #        ],3), """Result was %s"""%( result, )
 #        
@@ -500,7 +500,7 @@ class NameTests(unittest.TestCase):
 #            x := d*
 #            d := 'd'
 #        """, 'x', 'ddd', source)
-#        assert result == (1,[
+#        assert result == (True,[
 #            "hello world","hello world","hello world",
 #        ],3)
 #

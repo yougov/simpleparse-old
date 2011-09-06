@@ -43,6 +43,6 @@ if __name__ == '__main__':
         t = t-time.time()
         print '''Parsing Time:''', t
         for report, start, stop, children in val[1]:
-            print string.split(file[ start: stop ], '\n')[0][:75]
+            print file[ start: stop ].split('\n')[0][:75]
     else:
         print usage

@@ -122,7 +122,7 @@ class StringInterpreter(DispatchProcessor):
         return dispatch( self, sublist[0], buffer )
 
     def string_single_quote( self, (tag, left, right, sublist), buffer):
-        return string.join(dispatchList(self, sublist, buffer), "")
+        return "".join(dispatchList(self, sublist, buffer))
     string_double_quote = string_single_quote
     string_triple_single = string_single_quote
     string_triple_double = string_single_quote
@@ -132,12 +132,12 @@ class StringInterpreter(DispatchProcessor):
     nondelimiter = char_no_quote
 
     def escaped_char( self, (tag, left, right, sublist), buffer):
-        return string.join(dispatchList(self,sublist,buffer), "")
+        return "".join(dispatchList(self,sublist,buffer))
     
     def octal_escaped_char(self, (tag, left, right, sublist), buffer):
-        return chr(string.atoi( buffer[left:right], 8 ))
+        return chr(int(buffer[left:right], 8 ))
     def hex_escaped_char( self, (tag, left, right, sublist), buffer):
-        return chr(string.atoi( buffer[left:right], 16 ))
+        return chr(int( buffer[left:right], 16 ))
     
     def backslash_char( self, (tag, left, right, sublist), buffer):
         return "\\"

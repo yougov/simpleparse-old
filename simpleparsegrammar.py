@@ -539,7 +539,7 @@ class SPGrammarProcessor( DispatchProcessor ):
         children = dispatchList( self, sublist, buffer )
         errorOnFail = None
         result = []
-        for (item,tup) in map(None,children,sublist):
+        for (item,tup) in zip(children,sublist):
             if isinstance( item, ErrorOnFail ):
                 errorOnFail = item
             else:
@@ -581,12 +581,12 @@ class SPGrammarProcessor( DispatchProcessor ):
             classObject = Literal
         elements = dispatchList( self, sublist, buffer)
         ### Should check for CILiteral with non-CI string or single-character value!
-        return classObject( value = string.join(elements, "" ) )
+        return classObject( value = "".join(elements) )
 
     def range( self, (tag, left, right, sublist), buffer):
 ##		if hasattr( Range, 'requiresExpandedSet') and Range.requiresExpandedSet:
         return Range(
-            value = string.join(dispatchList( self, sublist, buffer),''),
+            value = ''.join(dispatchList( self, sublist, buffer)),
         )
 ##		else:
 ##			# need to build up a new-syntax version of the range...
@@ -621,7 +621,7 @@ class SPGrammarProcessor( DispatchProcessor ):
         err = ErrorOnFail()
         if children:
             (tag,left,right,children) = children[0]
-            message = string.join( dispatchList( self, children, buffer), "")
+            message = "".join( dispatchList( self, children, buffer))
             err.message = message
         return err
     def _config_error_on_fail( self, errorOnFail, tup, buffer ):
@@ -645,7 +645,7 @@ class SPGrammarProcessor( DispatchProcessor ):
         return getString(tup, buffer)
     CHAR = CHARNOSNGLQUOTE = CHARNODBLQUOTE
     def ESCAPEDCHAR( self, (tag, left, right, sublist), buffer):
-        return string.join(dispatchList( self, sublist, buffer), "")
+        return "".join(dispatchList( self, sublist, buffer))
     specialescapedmap = {
     'a':'\a',
     'b':'\b',
@@ -661,22 +661,18 @@ class SPGrammarProcessor( DispatchProcessor ):
     def SPECIALESCAPEDCHAR( self, tup, buffer):
         return self.specialescapedmap[ getString(tup, buffer)]
     def OCTALESCAPEDCHAR(self, tup, buffer):
-        return chr(string.atoi( getString(tup, buffer), 8 ))
+        return chr(int( getString(tup, buffer), 8 ))
     def HEXESCAPEDCHAR( self, tup , buffer):
-        return chr(string.atoi( getString(tup, buffer), 16 ))
+        return chr(int( getString(tup, buffer), 16 ))
     def CHARNOBRACE( self, (tag, left, right, sublist), buffer):
-        return string.join(dispatchList( self, sublist, buffer), "")
+        return "".join(dispatchList( self, sublist, buffer))
     def CHARRANGE( self, (tag, left, right, sublist), buffer):
         '''Create a string from first to second item'''
         # following should never raise an error, as there's only one possible format...
-        try:
-            first, second = map( ord, dispatchList( self, sublist, buffer))
-        except TypeError:
-            import pdb
-            pdb.set_trace ()
+        first, second = map( ord, dispatchList( self, sublist, buffer))
         if second < first:
             second, first = first, second
-        return string.join(map( chr, range(first, second+1),), '')
+        return "".join(map( chr, range(first, second+1),))
     def CHARDASH( self, tup , buffer):
         return '-'
     def CHARBRACE( self, tup , buffer):

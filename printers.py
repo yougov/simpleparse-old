@@ -34,7 +34,7 @@ class Parser(object):
             name = repr(name)
             element = self.reprObject(element,1)
             temp.append( self.ITEM%locals())
-        return string.join( temp, "")
+        return ''.join( temp )
     def reprObject( self, obj, depth=0, indent='    ' ):
         """Return a recognisable version of an objectgenerator element token"""
         argTemplate = (indent*(depth+1))+"%s = %s,"
@@ -48,12 +48,12 @@ class Parser(object):
                 childTemp.append( (indent*(depth+1))+']' )
                 
                 temp.append(
-                    argTemplate% (key, string.join(childTemp, '\n'))
+                    argTemplate% (key, '\n'.join(childTemp))
                 )
             else:
                 temp.append( argTemplate%( key, repr(value)))
         temp.append( (indent*depth)+')')
-        return string.join( temp,'\n')
+        return '\n'.join( temp )
 
 asGenerator = _GeneratorFormatter()
 asObject = asGenerator.reprObject

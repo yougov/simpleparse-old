@@ -13,6 +13,11 @@ class _NullResults(object):
             return 0
         else:
             return -1
+    
+    def __eq__( self, other ):
+        if other in ([], None ):
+            return True 
+        return False
     def __repr__( self ):
         return "<Null Children>"
 NullResult = _NullResults()
@@ -22,6 +27,10 @@ class _AnyInt(object):
             return 0
         else:
             return -1
+    def __eq__( self, other ):
+        if isinstance( other, (int,long) ):
+            return True 
+        return False
     def __repr__( self ):
         return "<Any Integer>"
 AnyInt = _AnyInt()

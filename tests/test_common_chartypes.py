@@ -3,7 +3,12 @@ from simpleparse.parser import Parser
 from simpleparse.common import chartypes, timezone_names
 from simpleparse import dispatchprocessor
 
-fulltrans = string.maketrans("","")
+if hasattr( string, 'maketrans' ):
+    all_chars = string.maketrans( '','' )
+else:
+    all_chars = bytes(range(255)).decode( 'latin-1' )
+def translate( all_chars, fromset ):
+    return "".join( [x for x in all_chars if x not in fromset ] )
 
 class CommonTests(unittest.TestCase):
     def doBasicTest(self, definition, parserName, testValue, expected, ):
@@ -13,7 +18,7 @@ class CommonTests(unittest.TestCase):
         """Test multi-line definitions"""
         decl = """single := %s multiple := %s"""%( singleName, multiName )
         p = Parser(decl)
-        notset = string.translate( fulltrans, fulltrans, set )
+        notset = translate( all_chars, set )
         for char in set:
             success, children, next = p.parse( char, singleName)
             assert success and (next == 1), """Parser for %s couldn't parse %s"""%( singleName, char )
@@ -63,7 +68,7 @@ class CommonTests(unittest.TestCase):
         decl = Parser("""this := (timezone_name, ' '?)+""", 'this')
         proc = dispatchprocessor.DispatchProcessor()
         proc.timezone_name = timezone_names.TimeZoneNameInterpreter()
-        text = string.join( names, ' ')
+        text = ' '.join( names )
         success, result, next = decl.parse( text, processor = proc )
         assert success, """Unable to complete parsing the timezone names, stopped parsing at char %s %s"""%(next, text[next:])
         assert result == map( timezone_names.timezone_mapping.get, names), """Got different results for interpretation than expected (expected first, recieved second)\n%s\n%s"""%(map( timezone_names.timezone_mapping.get, names), result)

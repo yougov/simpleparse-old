@@ -110,15 +110,16 @@ class HTMLVRMLFormatter( VRMLFormatter ):
     '''
     Format VRML files for display in HTML
     '''
+    _replacements = [
+        ('&', '&amp;'),
+        ('<', '&lt;'),
+        ('>', '&gt;'),
+        ('\t','  '),
+    ]
     def _escapeData( self, data ):
-        return string.join( string.split( 
-            string.join( string.split( 
-                string.join( string.split( 
-                    string.join( string.split( data, '&' ), '&amp;' ),
-                '<'), '&lt;'),
-            '>'), '&gt;'),
-        '\t'), '  ')
-            
+        for match,repl in self._replacements:
+            data = data.replace( match, repl )
+        return data
         
     NODEMAP = {
         'vrmlFile': '''<html><head><link href="vrmlCode.css" rel="stylesheet" type="text/css"></head><body><pre>''',

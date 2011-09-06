@@ -50,6 +50,9 @@ class Match( object ):
         return 4
     def __cmp__( self, other ):
         return cmp( (self.tag,self.start,self.stop,self.children), other )
+    def __eq__( self, other ):
+        tup = (self.tag,self.start,self.stop,self.children)
+        return tup == other
     def __getitem__( self, index ):
         return (self.tag,self.start,self.stop,self.children)[index]
     def __repr__( self ):
