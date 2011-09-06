@@ -1,5 +1,9 @@
 """Pure-python implementation of ObjectGenerator classes"""
 from simpleparse.error import ParserSyntaxError
+try:
+    import pypy 
+except ImportError, err:
+    pypy = None
 
 EMPTY = None
 
@@ -378,14 +382,23 @@ class SequentialGroup( Group ):
                 results.extend( new )
         return current,results 
 class FirstOfGroup( Group ):
-    def parse( self, buffer,start,stop,current, where=0):
-        if where >= len(self.parsers):
+    if pypy:
+        def parse( self, buffer,start,stop,current, where=0):
+            if where >= len(self.parsers):
+                raise NoMatch( self, buffer,start,stop,current )
+            else:
+                try:
+                    return self.parsers[where]( buffer,start,stop,current )
+                except NoMatch, err:
+                    return self.parse(buffer, start, stop, current, where+1)
+    else:
+        def parse( self, buffer,start,stop,current, where=0):
+            for item in self.parsers:
+                try: 
+                    return item( buffer,start,stop,current )
+                except NoMatch, err:
+                    pass
             raise NoMatch( self, buffer,start,stop,current )
-        else:
-            try:
-                return self.parsers[where]( buffer,start,stop,current )
-            except NoMatch, err:
-                return self.parse(buffer, start, stop, current, where+1)
 
 class EOF( ElementToken ):
     def parse( self, buffer,start,stop,current ):

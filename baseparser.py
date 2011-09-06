@@ -56,7 +56,7 @@ class BaseParser(object):
         This method must be implemented by your base class and _not_
         call the implementation here.
         """
-        raise NotImplementedError( """Parser sub-class %s hasn't implemented a buildParser method"""%(self.__class__.__name__))
+#        raise NotImplementedError( """Parser sub-class %s hasn't implemented a buildParser method"""%(self.__class__.__name__))
     def resetBeforeParse( self ):
         """Called just before the parser's parse method starts working,
 
