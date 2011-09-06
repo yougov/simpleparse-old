@@ -5,11 +5,17 @@ Run:
     python setup.py install
 to install the packages from the source archive.
 """
+import sys,os
+extra_commands = {}
 try:
     from setuptools import setup, Extension
 except ImportError:
     from distutils.core import setup, Extension
-import os, sys, string
+try:
+    from distutils.command.build_py import build_py_2to3
+    extra_commands['build_py'] = build_py_2to3
+except ImportError:
+    pass
 
 def findVersion( ):
     a = {}
@@ -82,9 +88,8 @@ largely deterministic grammars.""",
 
         package_dir = packages,
         options = options,
+        cmdclass= extra_commands,
 
         packages = list(packages.keys()),
-#		include_package_data = True,
-#		zip_safe = False,
         **extraArguments
     )
