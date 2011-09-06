@@ -5,8 +5,10 @@ Run:
     python setup.py install
 to install the packages from the source archive.
 """
-#from setuptools import setup, Extension
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
 import os, sys, string
 
 def findVersion( ):
@@ -25,7 +27,7 @@ def packagesFor( filename, basePackage="" ):
     set = {}
     for item in os.listdir(filename):
         dir = os.path.join(filename, item)
-        if string.lower(item) != 'cvs' and isPackage( dir ):
+        if item.lower() != 'cvs' and isPackage( dir ):
             if basePackage:
                 moduleName = basePackage+'.'+item
             else:
@@ -81,7 +83,7 @@ largely deterministic grammars.""",
         package_dir = packages,
         options = options,
 
-        packages = packages.keys(),
+        packages = list(packages.keys()),
 #		include_package_data = True,
 #		zip_safe = False,
         **extraArguments
