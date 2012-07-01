@@ -61,5 +61,5 @@ if __name__ == "__main__":
             else:
                 print 'success', item, next
                 pprint.pprint( children )
-        except SyntaxError, err:
+        except SyntaxError as err:
             print err

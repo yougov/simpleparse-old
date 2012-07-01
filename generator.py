@@ -30,11 +30,11 @@ class Generator(object):
         """Get a particular root object by name"""
         try:
             return self.rootObjects[ name ]
-        except (KeyError,NameError), err:
+        except (KeyError,NameError) as err:
             for source in self.definitionSources:
                 try:
                     return source[name]
-                except (NameError,KeyError), err:
+                except (NameError,KeyError) as err:
                     pass 
         raise NameError( name )
     __getitem__ = getRootObject
@@ -42,7 +42,7 @@ class Generator(object):
         """Get a particular token, or return default"""
         try:
             return self[ name ]
-        except (KeyError,NameError), err:
+        except (KeyError,NameError) as err:
             return default 
     
     def addDefinition( self, name, rootElement ):

@@ -93,7 +93,7 @@ class ErrorOnFailTests( unittest.TestCase ):
                 ''', 's' ).parse(
                 'acbdba',
             )
-        except ParserSyntaxError, err:
+        except ParserSyntaxError as err:
             assert err.error_message == "Blargh!", """Error message was %r, should have been "Blargh!"."""%(err.error_message,)
     def testErrorOnFail12( self ):
         """Test proper setting of err message text from !"message" syntax"""
@@ -102,7 +102,7 @@ class ErrorOnFailTests( unittest.TestCase ):
                 ''', 's' ).parse(
                 'acbdba',
             )
-        except ParserSyntaxError, err:
+        except ParserSyntaxError as err:
             description = str( err )
             assert description == 'ParserSyntaxError: Blargh!', """Didn't get expected error description, got: %s"""%(
                 str(err),

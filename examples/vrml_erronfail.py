@@ -93,5 +93,5 @@ if __name__ == "__main__":
         try:
             parser.parse( bad )
             print """\nWARNING: didn't get a syntax error for item %s\n"""%(repr(bad))
-        except SyntaxError, err:
+        except SyntaxError as err:
             print err

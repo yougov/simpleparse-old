@@ -2,7 +2,7 @@
 from simpleparse.error import ParserSyntaxError
 try:
     import pypy 
-except ImportError, err:
+except ImportError as err:
     pypy = None
 
 EMPTY = None
@@ -25,7 +25,7 @@ class CallableParser( object ):
                 stop = start
         try:
             current,result = self.grammar( buffer, start, stop, current )
-        except NoMatch, err:
+        except NoMatch as err:
             return (False,[],start)
         else:
             if result is EMPTY:
@@ -104,14 +104,14 @@ class ElementToken( object ):
         """By default, run the base parse and consider failure success"""
         try:
             return self.parse( buffer,start,stop,current )
-        except NoMatch, err:
+        except NoMatch as err:
             return current,EMPTY
     def parse_repeating_optional( self, buffer,start,stop,current ):
         result = EMPTY
         while current < stop:
             try:
                 current,new = self.parse( buffer,start,stop,current )
-            except NoMatch, err:
+            except NoMatch as err:
                 break
             else:
                 if new is not EMPTY:
@@ -126,7 +126,7 @@ class ElementToken( object ):
         while current < stop:
             try:
                 current,new = self.parse( buffer,start,stop,current )
-            except NoMatch, err:
+            except NoMatch as err:
                 break
             else:
                 found = True
@@ -141,7 +141,7 @@ class ElementToken( object ):
         original = current
         try:
             self.parse( buffer,start,stop,current )
-        except (EOFReached,NoMatch), err:
+        except (EOFReached,NoMatch) as err:
             current += 1
             return current,EMPTY
         else:
@@ -149,19 +149,19 @@ class ElementToken( object ):
     def parse_negative_optional( self, buffer,start,stop,current ):
         try:
             return self.parse_negative( buffer,start,stop,current )
-        except NoMatch, err:
+        except NoMatch as err:
             return current,EMPTY
     def parse_negative_repeating( self, buffer,start,stop,current ):
         original = final = current
         while current < stop:
             try:
                 self.parse( buffer,start,stop,current )
-            except EOFReached, err:
+            except EOFReached as err:
                 # child can read EOF before we do...
                 final += 1
                 if final >= stop:
                     break
-            except NoMatch, err:
+            except NoMatch as err:
                 final += 1
                 current += 1
             else:
@@ -173,7 +173,7 @@ class ElementToken( object ):
     def parse_negative_repeating_optional( self, buffer,start,stop,current ):
         try:
             return self.parse_negative_repeating( buffer,start,stop,current )
-        except NoMatch, err:
+        except NoMatch as err:
             return current,EMPTY
 
     def to_parser( self, generator=None, noReport=False ):
@@ -232,7 +232,7 @@ class UpdateErrorOnFail( Updater ):
     def __call__( self, buffer,start,stop,current ):
         try:
             return self.final_parser( buffer,start,stop,current )
-        except NoMatch, err:
+        except NoMatch as err:
             return self.errorOnFail( buffer,start,stop,current )
 class UpdateLookahead( Updater ):
     def __call__( self, buffer,start,stop,current ):
@@ -243,7 +243,7 @@ class UpdateErrorOnFailLookahead( UpdateLookahead, UpdateErrorOnFail ):
     def __call__( self, buffer,start,stop,current ):
         try:
             _,result = self.final_parser( buffer,start,stop,current )
-        except NoMatch, err:
+        except NoMatch as err:
             return self.errorOnFail( buffer,start,stop,current )
         else:
             return current,result
@@ -392,14 +392,14 @@ class FirstOfGroup( Group ):
             else:
                 try:
                     return self.parsers[where]( buffer,start,stop,current )
-                except NoMatch, err:
+                except NoMatch as err:
                     return self.parse(buffer, start, stop, current, where+1)
     else:
         def parse( self, buffer,start,stop,current, where=0):
             for item in self.parsers:
                 try: 
                     return item( buffer,start,stop,current )
-                except NoMatch, err:
+                except NoMatch as err:
                     pass
             raise NoMatch( self, buffer,start,stop,current )
 

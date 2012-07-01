@@ -42,7 +42,7 @@ def classify_class_attrs(cls):
         else:
             try:
                 obj = getattr(cls, name)
-            except AttributeError, err:
+            except AttributeError as err:
                 continue
 
         # Figure out where it was defined.
@@ -194,7 +194,7 @@ class DefaultFormatter(pydoc.HTMLDoc):
             for key, value in data:
                 try:
                     contents.append(self.document(value, key))
-                except Exception, err:
+                except Exception as err:
                     pass
             result = result + self.bigsection(
                 'Data', '#ffffff', '#55aa55', join(contents, '<br>\n'))
@@ -321,7 +321,7 @@ class PackageDocumentationGenerator:
         for exclusion in exclusions:
             try:
                 self.exclusions[ exclusion ]= pydoc.locate ( exclusion)
-            except pydoc.ErrorDuringImport, value:
+            except pydoc.ErrorDuringImport as value:
                 self.warn( """Unable to import the module %s which was specified as an exclusion module"""% (repr(exclusion)))
         self.formatter = formatter or DefaultFormatter()
         for base in baseModules:
@@ -337,7 +337,7 @@ class PackageDocumentationGenerator:
         try:
             self.baseSpecifiers [specifier] = pydoc.locate ( specifier)
             self.pending.append (specifier)
-        except pydoc.ErrorDuringImport, value:
+        except pydoc.ErrorDuringImport as value:
             self.warn( """Unable to import the module %s which was specified as a base module"""% (repr(specifier)))
     def addInteresting( self, specifier):
         """Add a module to the list of interesting modules"""
@@ -381,13 +381,13 @@ class PackageDocumentationGenerator:
                     self.info( """   ... found %s"""% (repr(object.__name__)))
                 except AlreadyDone:
                     pass
-                except pydoc.ErrorDuringImport, value:
+                except pydoc.ErrorDuringImport as value:
                     self.info( """   ... FAILED %s"""% (repr( value)))
                     self.warn( """Unable to import the module %s"""% (repr(self.pending[0])))
-                except (SystemError, SystemExit), value:
+                except (SystemError, SystemExit) as value:
                     self.info( """   ... FAILED %s"""% (repr( value)))
                     self.warn( """Unable to import the module %s"""% (repr(self.pending[0])))
-                except Exception, value:
+                except Exception as value:
                     self.info( """   ... FAILED %s"""% (repr( value)))
                     self.warn( """Unable to import the module %s"""% (repr(self.pending[0])))
                 else:

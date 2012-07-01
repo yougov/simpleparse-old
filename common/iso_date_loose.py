@@ -82,7 +82,7 @@ if haveMX:
             )
             try:
                 base = base + time
-            except Exception, err:
+            except Exception as err:
                 import pdb 
                 pdb.set_trace()
                 
