@@ -6,16 +6,16 @@ Run:
 to install the packages from the source archive.
 """
 import sys,os
-extra_commands = {}
 try:
     from setuptools import setup, Extension
 except ImportError:
     from distutils.core import setup, Extension
 try:
-    from distutils.command.build_py import build_py_2to3
-    extra_commands['build_py'] = build_py_2to3
+    from Cython.Distutils import build_ext
 except ImportError:
-    pass
+    have_cython = False
+else:
+    have_cython = True
 
 def findVersion( ):
     a = {}
@@ -45,13 +45,18 @@ def packagesFor( filename, basePackage="" ):
 packages = packagesFor( ".", 'simpleparse' )
 packages.update( {'simpleparse':'.'} )
 
+extensions = []
+extensions.append( Extension(
+    "simpleparse._objectgenerator",
+    [
+        ['_objectgenerator.c','_objectgenerator.pyx'][bool( have_cython )],
+    ],
+    include_dirs = [],
+))
+
 options = {
     'sdist': { 'force_manifest':1,'formats':['gztar','zip'] },
 }
-if sys.platform == 'win32':
-    options.setdefault(
-        'build_ext',{}
-    )['define'] = 'BAD_STATIC_FORWARD'
 
 if __name__ == "__main__":
     from sys import hexversion
@@ -78,6 +83,10 @@ largely deterministic grammars.""",
     else:
         extraArguments = {
         }
+    if have_cython:
+        extraArguments['cmdclass'] = {
+            'build_ext': build_ext,
+        }
     setup (
         name = "SimpleParse",
         version = findVersion(),
@@ -88,7 +97,9 @@ largely deterministic grammars.""",
 
         package_dir = packages,
         options = options,
-        cmdclass= extra_commands,
+        ext_modules=extensions,
+        
+        use_2to3 = True,
 
         packages = list(packages.keys()),
         **extraArguments
