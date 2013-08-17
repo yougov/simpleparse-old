@@ -39,19 +39,22 @@ class Parser(object):
         """Return a recognisable version of an objectgenerator element token"""
         argTemplate = (indent*(depth+1))+"%s = %s,"
         temp = ["""%s("""%(obj.__class__.__name__)]
-        for key,value in obj.__dict__.items():
-            if key == 'children':
-                childTemplate = (indent*(depth+2)) + '%s,'
-                childTemp = ["["]
-                for child in value:
-                    childTemp.append(childTemplate%self.reprObject(child,depth+2))
-                childTemp.append( (indent*(depth+1))+']' )
+        if hasattr( obj, '__dict__' ):
+            for key,value in obj.__dict__.items():
+                if key == 'children':
+                    childTemplate = (indent*(depth+2)) + '%s,'
+                    childTemp = ["["]
+                    for child in value:
+                       childTemp.append(childTemplate%self.reprObject(child,depth+2))
+                    childTemp.append( (indent*(depth+1))+']' )
                 
-                temp.append(
-                    argTemplate% (key, '\n'.join(childTemp))
-                )
-            else:
-                temp.append( argTemplate%( key, repr(value)))
+                    temp.append(
+                      argTemplate% (key, '\n'.join(childTemp))
+                    )
+                else:
+                    temp.append( argTemplate%( key, repr(value)))
+        else:
+            temp.append( repr( obj ))
         temp.append( (indent*depth)+')')
         return '\n'.join( temp )
 
