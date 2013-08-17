@@ -26,16 +26,17 @@ from simpleparse.dispatchprocessor import *
 import pprint
 
 class Processor( DispatchProcessor ):
-    def object( self, (tag,start,stop,children), buffer ):
+    def object( self, match, buffer ):
         obj = {}
-        for key,value in dispatchList( self, children, buffer ):
+        for key,value in dispatchList( self, match.children, buffer ):
             obj[key] = value
         return obj
-    def member( self, (tag,start,stop,children), buffer ):
-        return dispatchList( self, children, buffer )
-    def array( self, (tag,start,stop,children), buffer ):
-        return dispatchList( self, children, buffer )
-    def int_w_exp( self, (tag,start,stop,(a,b)), buffer ):
+    def member( self, match, buffer ):
+        return dispatchList( self, match.children, buffer )
+    def array( self, match, buffer ):
+        return dispatchList( self, match.children, buffer )
+    def int_w_exp( self, match, buffer ):
+        a,b = match.children
         base = dispatch( self, a, buffer )
         exp = dispatch( self, b, buffer )
         return base ** exp
