@@ -477,9 +477,9 @@ class SPGrammarProcessor( DispatchProcessor ):
         for source in definitionSources:
             self.generator.addDefinitionSource( source )
     
-    def declaration( self, (tag, left, right, sublist), buffer):
+    def declaration( self, match, buffer):
         '''Base declaration from the grammar, a "production" or "rule"'''
-        name = sublist[0]
+        name = match.children[0]
         expanded = 0
         if name[0] == "unreportedname":
             name = name[3][0]
@@ -493,7 +493,7 @@ class SPGrammarProcessor( DispatchProcessor ):
             report = 1
         name = getString( name, buffer )
         self.currentProduction = name
-        content = dispatch( self, sublist[1], buffer )
+        content = dispatch( self, match.children[1], buffer )
         content.report = report
         content.expanded = expanded
         self.generator.addDefinition(
@@ -503,7 +503,7 @@ class SPGrammarProcessor( DispatchProcessor ):
         del self.currentProduction
 
     ### element configuration
-    def element_token( self, (tag, left, right, sublist), buffer):
+    def element_token( self, match, buffer):
         '''get the children, then configure'''
         base = None
         negative = 0
@@ -511,7 +511,7 @@ class SPGrammarProcessor( DispatchProcessor ):
         repeating = 0
         lookahead = 0
         errorOnFail = None
-        for tup in sublist:
+        for tup in match.children:
             result = dispatch( self, tup, buffer )
             if tup[0] == 'negpos_indicator':
                 negative = result
@@ -522,7 +522,7 @@ class SPGrammarProcessor( DispatchProcessor ):
             elif tup[0] == 'error_on_fail':
                 # we do some extra work here
                 errorOnFail = result
-                self._config_error_on_fail( errorOnFail, (tag,left,tup[1],[]), buffer )
+                self._config_error_on_fail( errorOnFail, (match.tag,match.start,tup[1],[]), buffer )
             else:
                 base = result
         base.optional = optional
@@ -534,12 +534,12 @@ class SPGrammarProcessor( DispatchProcessor ):
         return base
 
     ### generator-node-builders
-    def seq_group( self, (tag, left, right, sublist), buffer):
+    def seq_group( self, match, buffer):
         """Process a sequential-group into a SequentialGroup element token"""
-        children = dispatchList( self, sublist, buffer )
+        children = dispatchList( self, match.children, buffer )
         errorOnFail = None
         result = []
-        for (item,tup) in zip(children,sublist):
+        for (item,tup) in zip(children,match.children):
             if isinstance( item, ErrorOnFail ):
                 errorOnFail = item
             else:
@@ -555,14 +555,14 @@ class SPGrammarProcessor( DispatchProcessor ):
             # single-item sequential group (very common)
             return result[0]
         elif not result:
-            raise ValueError( """SequentialGroup on line %s doesn't have an element-token child! grammar was %s"""%( lines(0,left, buffer), buffer[left:left+25]))
+            raise ValueError( """SequentialGroup on line %s doesn't have an element-token child! grammar was %s"""%( lines(0,match.start, buffer), buffer[match.start:match.start+25]))
         base = SequentialGroup(
             children = result,
         )
         return base
-    def fo_group( self, (tag, left, right, sublist), buffer):
+    def fo_group( self, match, buffer):
         """Process a first-of-group into a FirstOf element token"""
-        children = dispatchList( self, sublist, buffer )
+        children = dispatchList( self, match.children, buffer )
         if len(children) == 1:
             # this should never happen, but if it does, we can deal with it I suppose...
             return children[0]
@@ -571,8 +571,9 @@ class SPGrammarProcessor( DispatchProcessor ):
         )
         return base
         
-    def literal( self, (tag, left, right, sublist), buffer):
+    def literal( self, match, buffer):
         '''Turn a literal result into a literal generator'''
+        sublist = match.children
         if sublist and sublist[0][0] == 'literalDecorator':
             # right now only have the one decorator...
             sublist = sublist[1:]
@@ -583,18 +584,10 @@ class SPGrammarProcessor( DispatchProcessor ):
         ### Should check for CILiteral with non-CI string or single-character value!
         return classObject( value = "".join(elements) )
 
-    def range( self, (tag, left, right, sublist), buffer):
-##		if hasattr( Range, 'requiresExpandedSet') and Range.requiresExpandedSet:
+    def range( self, match, buffer):
         return Range(
-            value = ''.join(dispatchList( self, sublist, buffer)),
+            value = ''.join(dispatchList( self, match.children, buffer)),
         )
-##		else:
-##			# need to build up a new-syntax version of the range...
-##			# escape ^ to \^
-##			# escape \ to \\
-##			# escape - to \-
-##			# make sure range-sets are in proper order...
-##			raise NotImplementedError( """Haven't got the new CharSet version implemented yet""")
     def name( self, tup, buffer):
         return Name(
             value = getString(tup, buffer),
@@ -612,16 +605,15 @@ class SPGrammarProcessor( DispatchProcessor ):
     def lookahead_indicator( self, tup, buffer ):
         """If present, the lookahead indictor just says "yes", so just return 1"""
         return 1
-    def error_on_fail( self, (tag,left,right,children), buffer ):
+    def error_on_fail( self, match, buffer ):
         """If present, we are going to make the current object an errorOnFail type,
 
         If there's a string literal child, then we use it to create the
         "message" attribute of the errorOnFail object.
         """
         err = ErrorOnFail()
-        if children:
-            (tag,left,right,children) = children[0]
-            message = "".join( dispatchList( self, children, buffer))
+        if match.children:
+            message = "".join( dispatchList( self, match.children[0][-1], buffer))
             err.message = message
         return err
     def _config_error_on_fail( self, errorOnFail, tup, buffer ):
@@ -644,8 +636,8 @@ class SPGrammarProcessor( DispatchProcessor ):
     def CHARNODBLQUOTE( self, tup, buffer):
         return getString(tup, buffer)
     CHAR = CHARNOSNGLQUOTE = CHARNODBLQUOTE
-    def ESCAPEDCHAR( self, (tag, left, right, sublist), buffer):
-        return "".join(dispatchList( self, sublist, buffer))
+    def ESCAPEDCHAR( self, match, buffer):
+        return "".join(dispatchList( self, match.children, buffer))
     specialescapedmap = {
     'a':'\a',
     'b':'\b',
@@ -664,12 +656,11 @@ class SPGrammarProcessor( DispatchProcessor ):
         return chr(int( getString(tup, buffer), 8 ))
     def HEXESCAPEDCHAR( self, tup , buffer):
         return chr(int( getString(tup, buffer), 16 ))
-    def CHARNOBRACE( self, (tag, left, right, sublist), buffer):
-        return "".join(dispatchList( self, sublist, buffer))
-    def CHARRANGE( self, (tag, left, right, sublist), buffer):
+    def CHARNOBRACE( self, match, buffer):
+        return "".join(dispatchList( self, match.children, buffer))
+    def CHARRANGE( self, match, buffer):
         '''Create a string from first to second item'''
-        # following should never raise an error, as there's only one possible format...
-        first, second = map( ord, dispatchList( self, sublist, buffer))
+        first, second = map( ord, dispatchList( self, match.children, buffer))
         if second < first:
             second, first = first, second
         return "".join(map( chr, range(first, second+1),))
@@ -679,20 +670,20 @@ class SPGrammarProcessor( DispatchProcessor ):
         return ']'
 
     if HAVE_UNICODE:
-        def UNICODEESCAPEDCHAR_16( self, (tag, left, right, sublist), buffer):
+        def UNICODEESCAPEDCHAR_16( self, match, buffer):
             """Only available in unicode-aware Python versions"""
-            char = unichr(int( buffer[left:right], 16 ))
+            char = unichr(int( buffer[match.start:match.stop], 16 ))
             return char
         ### Only available in wide-unicode Python versions (rare)
         UNICODEESCAPEDCHAR_32 = UNICODEESCAPEDCHAR_16
     else:
         # ignore unicode-specific characters, though this isn't a particularly
         # useful approach, I don't see a better option at the moment...
-        def UNICODEESCAPEDCHAR_16( self, (tag, left, right, sublist), buffer):
+        def UNICODEESCAPEDCHAR_16( self, match, buffer):
             """Only available in unicode-aware Python versions"""
             return ""
             
-        def UNICODEESCAPEDCHAR_32( self, (tag, left, right, sublist), buffer):
+        def UNICODEESCAPEDCHAR_32( self, match, buffer):
             """Only available in wide-unicode Python versions (rare)"""
             return ""
     
