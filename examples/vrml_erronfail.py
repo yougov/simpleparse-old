@@ -70,9 +70,9 @@ if __name__ == "__main__":
         t = time.time()
         success, tags, next = parser.parse( data)
         d = time.time()-t
-        print "parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) )
+        print("parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) ))
     # now show the error-generation
-    print '''About to parse badly formatted VRML data'''
+    print('''About to parse badly formatted VRML data''')
     badData = [
         '''#whatever\nX{ { } }''',
         '''#whatever\nX{ S }''',
@@ -92,6 +92,6 @@ if __name__ == "__main__":
     for bad in badData:
         try:
             parser.parse( bad )
-            print """\nWARNING: didn't get a syntax error for item %s\n"""%(repr(bad))
+            print("""\nWARNING: didn't get a syntax error for item %s\n"""%(repr(bad)))
         except SyntaxError as err:
-            print err
+            print(err)

@@ -98,6 +98,6 @@ if __name__ == "__main__":
         t = time.time()
         a.parse( test )
         t = time.time()-t
-        print 'total time', t, 'length', len(test)
+        print('total time', t, 'length', len(test))
         if t:
-            print '  %s cps' % (len(test)/t)
+            print('  %s cps' % (len(test)/t))

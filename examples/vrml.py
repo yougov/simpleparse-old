@@ -57,7 +57,7 @@ def main():
         t = time.time()
         success, tags, next = parser.parse( data)
         d = time.time()-t
-        print "parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) )
+        print(( "parsed %s characters of %s in %s seconds (%scps)"%( next, len(data), d, next/(d or 0.000000001) )))
     return 0
 if __name__ == "__main__":
     main()

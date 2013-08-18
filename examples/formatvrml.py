@@ -189,7 +189,7 @@ Description:
 if __name__ == '__main__':
     import sys
     if len( sys.argv) != 3:
-        print usage
+        print(usage)
         raw_input('Press <return> to exit:')
     else:
         file = HTMLVRMLFormatter( sys.argv[1] )

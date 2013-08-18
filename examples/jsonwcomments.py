@@ -62,9 +62,9 @@ def loads( json ):
 
 if __name__ =="__main__":
     import sys,json,pprint
-    print json.dumps(
+    print(json.dumps(
         parser.parse(
             open(sys.argv[1]).read(),
             processor=Processor()
         )[1][0]
-    )
+    ))

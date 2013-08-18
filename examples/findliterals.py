@@ -19,7 +19,7 @@ parser = Parser( declaration, "myfile" )
 
 def bigtest( file, parser = parser  ):
     val = parser.parse( file)
-    print 'parsed %s characters of %s characters' % (val[-1], len(file))
+    print('parsed %s characters of %s characters' % (val[-1], len(file)))
     return val
 
 def test():
@@ -41,8 +41,8 @@ if __name__ == '__main__':
         t = time.time()
         val = bigtest( file )
         t = t-time.time()
-        print '''Parsing Time:''', t
+        print('''Parsing Time:''', t)
         for report, start, stop, children in val[1]:
-            print file[ start: stop ].split('\n')[0][:75]
+            print(file[ start: stop ].split('\n')[0][:75])
     else:
-        print usage
+        print(usage)

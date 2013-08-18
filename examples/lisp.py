@@ -57,9 +57,9 @@ if __name__ == "__main__":
         try:
             success, children, next = parser.parse( item )
             if not success:
-                print 'fail', item
+                print('fail', item)
             else:
-                print 'success', item, next
+                print('success', item, next)
                 pprint.pprint( children )
         except SyntaxError as err:
-            print err
+            print(err)
