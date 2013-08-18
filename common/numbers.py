@@ -110,62 +110,60 @@ def _toLong( s, base ):
 
 class IntInterpreter(DispatchProcessor):
     """Interpret an integer (or unsigned integer) string as an integer"""
-    def __call__( self, (tag, left, right, children), buffer):
+    def __call__( self, match, buffer):
         try:
-            return _toInt( buffer[left:right], 10)
+            return _toInt( buffer[match.start:match.stop], 10)
         except ValueError:
-            return _toLong( buffer[left:right], 10)
+            return _toLong( buffer[match.start:match.stop], 10)
 class HexInterpreter(DispatchProcessor):
     """Interpret a hexidecimal integer string as an integer value"""
-    def __call__( self, (tag, left, right, children), buffer):
+    def __call__( self, match, buffer):
         try:
-            return _toInt( buffer[left:right], 16)
+            return _toInt( buffer[match.start:match.stop], 16)
         except ValueError:
-            return _toLong( buffer[left:right], 16)
+            return _toLong( buffer[match.start:match.stop], 16)
         
 class FloatFloatExpInterpreter(DispatchProcessor):
     """Interpret a float string as an integer value
     Note: we're allowing float exponentiation, which
     gives you a nice way to write 2e.5
     """
-    def __call__( self, (tag, left, right, children), buffer):
-        tag, l, r, _ = children[0]
+    def __call__( self, match, buffer):
+        tag, l, r, _ = match.children[0]
         base = float( buffer[l:r] )
-        if len(children) > 1:
+        if len(match.children) > 1:
             # figure out the exponent...
-            exp = children[1]
-            exp = buffer[ exp[1]:exp[2]]
-##			import pdb
-##			pdb.set_trace()
+            exp = match.children[1]
+            exp = buffer[ exp.start:exp.stop]
             exp = float( exp )
             
             base = base * (10** exp)
         return base
 class FloatInterpreter(DispatchProcessor):
     """Interpret a standard float value as a float"""
-    def __call__( self, (tag, left, right, children), buffer):
-        return float( buffer[left:right])
+    def __call__( self, match, buffer):
+        return float( buffer[match.start:match.stop])
 
 import sys
 if hasattr( sys,'version_info') and sys.version_info[:2] > (2,0):
     class BinaryInterpreter(DispatchProcessor):
-        def __call__( self, (tag, left, right, children), buffer):
+        def __call__( self, match, buffer):
             """Interpret a bitfield set as an integer"""
-            return _toInt( buffer[left:right-1], 2)
+            return _toInt( buffer[match.start:match.stop-1], 2)
 else:
     class BinaryInterpreter(DispatchProcessor):
-        def __call__( self, (tag, left, right, children), buffer):
+        def __call__( self, match, buffer):
             """Interpret a bitfield set as an integer, not sure this algo
             is correct, will see I suppose"""
             sign = 1
-            if len(children) > 2:
-                s = children[0]
-                for schar in buffer[s[1]:s[2]]:
+            if len(match.children) > 2:
+                s = match.children[0]
+                for schar in buffer[s.start:s.stop]:
                     if schar == '-':
                         sign = sign * -1
-                bits = buffer[children[1][1]:children[1][2]]
+                bits = buffer[children[1].start:children[1].stop]
             else:
-                bits = buffer[children[0][1]:children[0][2]]
+                bits = buffer[children[0].start:children[0].stop]
             value = 0
             for bit in bits:
                 value = (value << 1)
@@ -178,10 +176,10 @@ class ImaginaryInterpreter( DispatchProcessor ):
         "float":FloatInterpreter(),
         "int":IntInterpreter()
     }
-    def __call__( self, (tag, left, right, children), buffer):
+    def __call__( self, match, buffer):
         """Interpret a bitfield set as an integer, not sure this algo
         is correct, will see I suppose"""
-        base = children[0]
-        base = self.mapSet[base[0]](base, buffer)
+        base = match.children[0]
+        base = self.mapSet[base.tag](base, buffer)
         return base * 1j
     

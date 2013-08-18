@@ -59,9 +59,9 @@ by the last TextTools command in the top-level production before the entire
 table failed. This is a lower-level value than is usefully predictable within
 SimpleParse (for instance, negative results which cause a failure will actually
 report the position after the positive version of the element token succeeds).
- You might, I suppose, use it as a hint to your users of where the error
+Â You might, I suppose, use it as a hint to your users of where the error
 occured, but using error-on-fail SyntaxErrors is <b>by far</b> the prefered
-method.  Basically, if success is false, consider nextCharacter to contain
+method. Â Basically, if success is false, consider nextCharacter to contain
 garbage data.<br>
     </p>
        
@@ -88,7 +88,7 @@ results in the position where the LookAhead is included in the grammar.</p>
        
 <p>If the processor argument to parse is true and callable, the processor
   object will be called with (success, resultTrees, nextCharacter) on completion
-  of parsing.  The processor can then take whatever processing steps desired,
+  of parsing. Â The processor can then take whatever processing steps desired,
   the return value from calling the processor with the results is returned
  directly to the caller of parse.<br>
      </p>
@@ -96,12 +96,12 @@ results in the position where the LookAhead is included in the grammar.</p>
 <h2>DispatchProcessor</h2>
                          
 <p>SimpleParse 2.0 provides a simple mechanism for processing result trees,
-  a recursive series of calls to attributes of  a  “Processor” object with
- functions to automate the call-by-name dispatching.  This processor implementation
+  a recursive series of calls to attributes of  a  Â“ProcessorÂ” object with
+ functions to automate the call-by-name dispatching. Â This processor implementation
  is available for examination in the simpleparse.dispatchprocessor module.
-  The main functions are:</p>
+ Â The main functions are:</p>
                          
-<pre>def dispatch( source, tag, buffer ):<br>	"""Dispatch on source for tag with buffer<br><br>	Find the attribute or key "tag-object" (tag[0]) of source,<br>	then call it with (tag, buffer)<br>	"""<br>def dispatchList( source, taglist, buffer ):<br>	"""Dispatch on source for each tag in taglist with buffer"""<br><br>def multiMap( taglist, source=None, buffer=None ):<br>	"""Convert a taglist to a mapping from tag-object:[list-of-tags]<br>	<br>	For instance, if you have items of 3 different types, in any order,<br>	you can retrieve them all sorted by type with multimap( childlist)<br>	then access them by tagobject key.<br><br>	If source and buffer are specified, call dispatch on all items.<br>	"""<br><br>def singleMap( taglist, source=None, buffer=None ):<br>	"""Convert a taglist to a mapping from tag-object:tag, <br>	overwritting early with late tags.  If source and buffer<br>	are specified, call dispatch on all items."""<br><br>def getString( (tag, left, right, sublist), buffer):<br>	"""Return the string value of the tag passed"""<br><br>def lines( start=None, end=None, buffer=None ):<br>	"""Return number of lines in buffer[start:end]"""<br></pre>
+<pre>def dispatch( source, tag, buffer ):<br>	"""Dispatch on source for tag with buffer<br><br>	Find the attribute or key "tag-object" (tag.tag) of source,<br>	then call it with (tag, buffer)<br>	"""<br>def dispatchList( source, taglist, buffer ):<br>	"""Dispatch on source for each tag in taglist with buffer"""<br><br>def multiMap( taglist, source=None, buffer=None ):<br>	"""Convert a taglist to a mapping from tag-object:[list-of-tags]<br>	<br>	For instance, if you have items of 3 different types, in any order,<br>	you can retrieve them all sorted by type with multimap( childlist)<br>	then access them by tagobject key.<br><br>	If source and buffer are specified, call dispatch on all items.<br>	"""<br><br>def singleMap( taglist, source=None, buffer=None ):<br>	"""Convert a taglist to a mapping from tag-object:tag, <br>	overwritting early with late tags.  If source and buffer<br>	are specified, call dispatch on all items."""<br><br>def getString( (tag, left, right, sublist), buffer):<br>	"""Return the string value of the tag passed"""<br><br>def lines( start=None, end=None, buffer=None ):<br>	"""Return number of lines in buffer[start:end]"""<br></pre>
                        
 <p>With a class <b>DispatchProcessor</b>, which provides a __call__ implementation
   to trigger dispatching for both "called as root processor" and "called
@@ -112,13 +112,14 @@ to   process an individual result element" cases.<br>
   that will be processed by the processor, with signatures of:<br>
     </p>
        
-<pre>from simpleparse.dispatchprocessor import *<br>class MyProcessorClass( DispatchProcessor ):<br>	def production_name( self, (tag,start,stop,subtags), buffer ):<br>		"""Process the given production and it's children"""<br></pre>
+<pre>from simpleparse.dispatchprocessor import *<br>class MyProcessorClass( DispatchProcessor ):<br>	def production_name( self, match, buffer ):<br>		"""Process the given production and it's children"""<br></pre>
        
 <p>Within those production-handling methods, you can call the dispatch functions
-  to process the sub-tags of the current production (keep in mind that the
- sub-tags "list" may be a None object).  You can see examples of this processing
- methodology in simpleparse.simpleparsegrammar, simpleparse.common.iso_date
- and simpleparse.common.strings (among others).<br>
+  to process the sub-tags of the current production ``match.children`` 
+  (keep in mind that the sub-tags "list" may be a None object). 
+  You can see examples of this processing
+  methodology in simpleparse.simpleparsegrammar, simpleparse.common.iso_date
+  and simpleparse.common.strings (among others).<br>
     </p>
        
 <p>For real-world Parsers, where you normally use the same processing class
@@ -139,27 +140,27 @@ AppendToTagobj, AppendTagobj,       CallTag)</h2>
                          
 <p>SimpleParse 2.0 introduced features which expose certain of the mx.TextTool
       library's features for producing non-standard result trees.  Although
-  not    generally recommended for use in “normal” parsers, these features
+  not    generally recommended for use in Â“normalÂ” parsers, these features
  are useful    for certain types of text processing, and their exposure was
  requested.  Each  flag has a different effect on the result tree, the particular
  effects  are  discussed below.</p>
                          
 <p>The exposure is through the Processor (or more precisely, a super-class
-      of Processor called “MethodSource”) object. To specify the use of one
+      of Processor called Â“MethodSourceÂ”) object. To specify the use of one
   of the flags, you set an attribute    in your MethodSource object (your
-Processor  object) with the    name _m_productionname (for the “method” to
+Processor  object) with the    name _m_productionname (for the Â“methodÂ” to
 use, which  is either an actual    callable object for use with CallTag,
 or one of the  other mx.TextTools  flag   constants above).  In the case
 of  AppendTagobj  , you will likely want to   specify a particular tagobj
 object to be appended,  you do that by setting   an attribute named _o_productionname
 in your MethodSource.   For AppendToTagobj,   you <b>must</b><span
- style=""> specify an _o_productionname  object with an “append” method.<br>
+ style=""> specify an _o_productionname  object with an Â“appendÂ” method.<br>
     </span></p>
        
 <p><span style="">Note: you can use MethodSource as your direct ancestor
 if you want to define a non-standard result tree, but don't want to do any
 processing of the results (this is the reason for having seperate classes).
- MethodSource does not define a __call__ method.<br>
+Â MethodSource does not define a __call__ method.<br>
     </span></p>
                          
 <h3>CallTag</h3>
@@ -174,13 +175,13 @@ processing of the results (this is the reason for having seperate classes).
                          
 <ul>
              	<li>               Nothing is (necessarily) added to the results 
-list when 	CallTag    is specified!  If you want something added, call taglist.append( 
+list when 	CallTag    is specified! Â If you want something added, call taglist.append( 
 item ).   	    	</li>
               <li>              Raising an error in the CallTag method will 
  	halt    parsing.    	</li>
               <li>                    The  callableObject  is accessed from 
  the   	MethodSource object using   standard getattr, so if you are using 
-a 	function,   it will need to define   a “self” parameter for 	the first 
+a 	function,   it will need to define   a Â“selfÂ” parameter for 	the first 
 position.       </li>
                        
 </ul>

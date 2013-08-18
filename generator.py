@@ -25,7 +25,10 @@ class Generator(object):
         return self.rootObjects
     def getNames( self ):
         '''Return the list of root generator objects'''
-        return self.rootObjects.keys()
+        names = self.rootObjects.keys()
+        if not isinstance( names, list ):
+            names = list(names)
+        return names
     def getRootObject( self, name ):
         """Get a particular root object by name"""
         try:

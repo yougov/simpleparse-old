@@ -117,34 +117,34 @@ class StringInterpreter(DispatchProcessor):
             # used string in another area.
             string_single_quote = string
     """
-    def string( self, (tag, left, right, sublist), buffer):
+    def string( self, match, buffer):
         """Dispatch any of the string types and return the result"""
-        return dispatch( self, sublist[0], buffer )
+        return dispatch( self, match.children[0], buffer )
 
-    def string_single_quote( self, (tag, left, right, sublist), buffer):
-        return "".join(dispatchList(self, sublist, buffer))
+    def string_single_quote( self, match, buffer):
+        return "".join(dispatchList(self, match.children, buffer))
     string_double_quote = string_single_quote
     string_triple_single = string_single_quote
     string_triple_double = string_single_quote
         
-    def char_no_quote( self, (tag, left, right, sublist), buffer):
-        return buffer[left:right]
+    def char_no_quote( self, match, buffer):
+        return buffer[match.start:match.stop]
     nondelimiter = char_no_quote
 
-    def escaped_char( self, (tag, left, right, sublist), buffer):
-        return "".join(dispatchList(self,sublist,buffer))
+    def escaped_char( self, match, buffer):
+        return "".join(dispatchList(self,match.children,buffer))
     
-    def octal_escaped_char(self, (tag, left, right, sublist), buffer):
-        return chr(int(buffer[left:right], 8 ))
-    def hex_escaped_char( self, (tag, left, right, sublist), buffer):
-        return chr(int( buffer[left:right], 16 ))
+    def octal_escaped_char(self, match, buffer):
+        return chr(int(buffer[match.start:match.stop], 8 ))
+    def hex_escaped_char( self, match, buffer):
+        return chr(int( buffer[match.start:match.stop], 16 ))
     
-    def backslash_char( self, (tag, left, right, sublist), buffer):
+    def backslash_char( self, match, buffer):
         return "\\"
 
-    def string_special_escapes( self, (tag, left, right, sublist), buffer):
+    def string_special_escapes( self, match, buffer):
         """Maps "special" escapes to the corresponding characters"""
-        return self.specialescapedmap[ buffer[left:right]]
+        return self.specialescapedmap[ buffer[match.start:match.stop]]
     specialescapedmap = {
     'a':'\a',
     'b':'\b',

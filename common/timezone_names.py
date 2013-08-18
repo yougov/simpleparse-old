@@ -206,8 +206,8 @@ class TimeZoneNameInterpreter(object):
         """
         self.defaultZone = defaultZone
         self.seconds = seconds
-    def __call__( self, (tag, left, right, children), buffer ):
-        value = buffer[ left: right ]
+    def __call__( self, match, buffer ):
+        value = buffer[ match.start:match.stop ]
         if value:
             try:
                 return timezone_mapping[ value ]/self.seconds

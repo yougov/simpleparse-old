@@ -45,18 +45,18 @@ def dispatch( source, tag, buffer ):
     then call it with (tag, buffer)
     """
     try:
-        function = getattr (source, tag[0])
+        function = getattr (source, tag.tag)
     except (AttributeError,TypeError):
         try:
-            function = source[tag[0]]
+            function = source[tag.tag]
         except:
-            raise AttributeError( '''No processing function for tag "%s" in object %s! Check the parser definition!'''%(tag[0], repr(source)))
+            raise AttributeError( '''No processing function for tag "%s" in object %s! Check the parser definition!'''%(tag.tag, repr(source)))
     return function( tag, buffer )
 
 def dispatchList( source, taglist, buffer ):
     """Dispatch on source for each tag in taglist with buffer"""
     if taglist:
-        return map( dispatch, [source]*len(taglist), taglist, [buffer]*len(taglist))
+        return [ dispatch( source, tag, buffer ) for tag in taglist ]
     else:
         return []
 
@@ -70,7 +70,7 @@ except AttributeError:
         if not taglist:
             return set
         for tag in taglist:
-            key = tag[0]
+            key = tag.tag
             if source and buffer:
                 tag = dispatch( source, tag, buffer )
             set[key] = set.get(key, []) + [tag]
@@ -87,7 +87,7 @@ else:
         if not taglist:
             return set
         for tag in taglist:
-            key = tag[0]
+            key = tag.tag
             if source and buffer:
                 tag = dispatch( source, tag, buffer )
             set.setdefault(key,[]).append( tag )
@@ -98,15 +98,15 @@ def singleMap( taglist, source=None, buffer=None ):
     if not taglist:
         return set
     for tag in taglist:
-        key = tag[0]
+        key = tag.tag
         if source and buffer:
             tag = dispatch( source, tag, buffer )
         set[key] = tag
     return set
     
-def getString( (tag, left, right, sublist), buffer):
+def getString(match, buffer):
     """Return the string value of the tag passed"""
-    return buffer[ left:right ]
+    return buffer[ match.start:match.stop ]
 
 try:
     from simpleparse.stt.TextTools import countlines

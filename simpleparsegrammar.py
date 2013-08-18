@@ -481,11 +481,11 @@ class SPGrammarProcessor( DispatchProcessor ):
         '''Base declaration from the grammar, a "production" or "rule"'''
         name = match.children[0]
         expanded = 0
-        if name[0] == "unreportedname":
+        if name.tag == "unreportedname":
             name = name[3][0]
             # note that the info is stored in the wrong place :(
             report = 0
-        elif name[0] == 'expandedname':
+        elif name.tag == 'expandedname':
             report = 1
             expanded = 1
             name = name[3][0]
@@ -513,16 +513,16 @@ class SPGrammarProcessor( DispatchProcessor ):
         errorOnFail = None
         for tup in match.children:
             result = dispatch( self, tup, buffer )
-            if tup[0] == 'negpos_indicator':
+            if tup.tag == 'negpos_indicator':
                 negative = result
-            elif tup[0] == 'occurence_indicator':
+            elif tup.tag == 'occurence_indicator':
                 optional, repeating = result
-            elif tup[0] == 'lookahead_indicator':
+            elif tup.tag == 'lookahead_indicator':
                 lookahead = result
-            elif tup[0] == 'error_on_fail':
+            elif tup.tag == 'error_on_fail':
                 # we do some extra work here
                 errorOnFail = result
-                self._config_error_on_fail( errorOnFail, (match.tag,match.start,tup[1],[]), buffer )
+                self._config_error_on_fail( errorOnFail, (match.tag,match.start,tup.stop,[]), buffer )
             else:
                 base = result
         base.optional = optional
@@ -574,7 +574,7 @@ class SPGrammarProcessor( DispatchProcessor ):
     def literal( self, match, buffer):
         '''Turn a literal result into a literal generator'''
         sublist = match.children
-        if sublist and sublist[0][0] == 'literalDecorator':
+        if sublist and sublist[0].tag == 'literalDecorator':
             # right now only have the one decorator...
             sublist = sublist[1:]
             classObject = CILiteral
@@ -613,7 +613,7 @@ class SPGrammarProcessor( DispatchProcessor ):
         """
         err = ErrorOnFail()
         if match.children:
-            message = "".join( dispatchList( self, match.children[0][-1], buffer))
+            message = "".join( dispatchList( self, match.children[0].children, buffer))
             err.message = message
         return err
     def _config_error_on_fail( self, errorOnFail, tup, buffer ):
@@ -660,10 +660,10 @@ class SPGrammarProcessor( DispatchProcessor ):
         return "".join(dispatchList( self, match.children, buffer))
     def CHARRANGE( self, match, buffer):
         '''Create a string from first to second item'''
-        first, second = map( ord, dispatchList( self, match.children, buffer))
+        first, second = [ord(r) for r in dispatchList( self, match.children, buffer)]
         if second < first:
             second, first = first, second
-        return "".join(map( chr, range(first, second+1),))
+        return "".join([chr(c) for c in range(first, second+1)])
     def CHARDASH( self, tup , buffer):
         return '-'
     def CHARBRACE( self, tup , buffer):

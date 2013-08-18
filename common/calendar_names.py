@@ -74,8 +74,8 @@ class NameInterpreter(object):
     offset = 1
     def __init__( self, offset = 1 ):
         self.offset = offset
-    def __call__( self, (tag, left, right, children), buffer ):
-        value = buffer[left:right].lower()
+    def __call__( self,match, buffer ):
+        value = buffer[match.start:match.stop].lower()
         for table in self.tables:
             try:
                 return table.index( value )+ self.offset
