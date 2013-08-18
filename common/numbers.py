@@ -177,8 +177,7 @@ class ImaginaryInterpreter( DispatchProcessor ):
         "int":IntInterpreter()
     }
     def __call__( self, match, buffer):
-        """Interpret a bitfield set as an integer, not sure this algo
-        is correct, will see I suppose"""
+        """Interpret a literal imaginary number"""
         base = match.children[0]
         base = self.mapSet[base.tag](base, buffer)
         return base * 1j

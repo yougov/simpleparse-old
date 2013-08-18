@@ -75,7 +75,7 @@ class VRMLFormatter(object):
         if hdata is not None:
             outfile.write( hdata )
         startPos = tup[1]
-        children = tup[3][:]
+        children = tup[3]
         while children:
             outfile.write( self._escapeData( infile[ startPos: children[0][1] ] )  )
             self._format( children[0], outfile, infile )

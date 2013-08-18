@@ -36,7 +36,6 @@ import sys, string
 from simpleparse.parser import Parser
 parser = Parser(declaration,'set')
 
-
 class Emitter(object):
     def process( self, data ):
         #import pprint

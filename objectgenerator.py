@@ -125,7 +125,7 @@ class ElementToken( object ):
         found = False
         while current < stop:
             try:
-                current,new = self.parse( buffer,start,stop,current )
+                new_current,new = self.parse( buffer,start,stop,current )
             except NoMatch as err:
                 break
             else:
@@ -134,6 +134,9 @@ class ElementToken( object ):
                     if result is EMPTY:
                         result = []
                     result.extend( new )
+                if new_current == current:
+                    break
+                current = new_current
         if not found:
             raise NoMatch( self, buffer,start,stop,current )
         return current,result

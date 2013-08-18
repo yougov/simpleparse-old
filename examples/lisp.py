@@ -32,7 +32,6 @@ from simpleparse.dispatchprocessor import *
 parser = Parser( definition, 'atom' )
 
 if __name__ == "__main__":
-    from simpleparse.stt.TextTools import print_tags
 
     shouldParse = [
         "(+ 2 3)",
