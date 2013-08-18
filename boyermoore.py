@@ -80,6 +80,6 @@ def test_re():
 
 if __name__ == "__main__":
     for i in range( 50 ):
-        test_re()
-        #test_big()
+        #test_re()
+        test_big()
     
