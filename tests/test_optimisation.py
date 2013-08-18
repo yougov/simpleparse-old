@@ -22,8 +22,8 @@ def _rcmp( item1, item2 ):
             if not rcmp( item1[2][0][item1[2][1]], item2[2][0][item2[2][1]]):
                 return 0
         except TypeError:
-            print item1
-            print item2
+            print( item1 )
+            print( item2 )
     elif item1[1] == 207:
         if cmp(item2[:2], item2[:2]) != 0:
             return 0

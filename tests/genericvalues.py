@@ -6,6 +6,10 @@ concrete results returned by the engine.  So, for instance, you
 can say "returns no children" (NullResults) for result-tuples or
 "whatever failure position" for failure return values.
 """
+try:
+    long 
+except NameError:
+    long = int
 
 class _NullResults(object):
     def __cmp__( self, other ):
