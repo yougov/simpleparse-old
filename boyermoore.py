@@ -3,8 +3,6 @@
 class BoyerMoore( object ):
     def __init__( self, search_text ):
         self.search_text = search_text 
-        self.notfound = len(search_text)
-        self.indices = zip(range(self.notfound)[::-1],self.search_text[::-1])
         self.jumps = []
         jumptables = {}
         # for each character, pass through creating dicts of char:previous position 
@@ -19,16 +17,15 @@ class BoyerMoore( object ):
             stop = len(text) + stop 
             if stop < 0:
                 return -1
-        notfound = self.notfound
-        indices = self.indices
+        indices = range(len(self.search_text))[::-1]
+        search_text = self.search_text
         jumps = self.jumps
-        stop = stop-notfound+1
+        stop = stop-len(self.search_text)+1
         while offset < stop:
-            for i,char in indices:
+            for i in indices:
                 test = text[offset+i]
-                if test != char:
-                    jumptable = self.jumps[i]
-                    j = jumptable.get(test,-1)
+                if test != search_text[i]:
+                    j = jumps[i].get(test,-1)
                     offset += i - j
                     break 
                 if i == 0:
