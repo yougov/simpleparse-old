@@ -19,7 +19,7 @@ except ImportError:
 
 def findVersion( ):
     a = {}
-    exec( open( '__init__.py' ).read(), a, a )
+    exec( open( os.path.join( 'simpleparse', '__init__.py') ).read(), a, a )
     return a['__version__']
 
 def isPackage( filename ):
@@ -42,8 +42,8 @@ def packagesFor( filename, basePackage="" ):
             set.update( packagesFor( dir, moduleName))
     return set
 
-packages = packagesFor( ".", 'simpleparse' )
-packages.update( {'simpleparse':'.'} )
+packages = packagesFor( "simpleparse", 'simpleparse' )
+packages.update( {'simpleparse':'simpleparse'} )
 
 options = {
     'sdist': { 'force_manifest':1,'formats':['gztar','zip'] },
