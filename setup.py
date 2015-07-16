@@ -5,6 +5,7 @@ Run:
     python setup.py install
 to install the packages from the source archive.
 """
+from __future__ import print_function
 import sys,os
 extra_commands = {}
 try:
@@ -16,6 +17,15 @@ try:
     extra_commands['build_py'] = build_py_2to3
 except ImportError:
     pass
+
+try:
+    from Cython.Distutils import build_ext
+except ImportError:
+    have_cython = False
+else:
+    have_cython = True
+print('Have cython:', have_cython)
+
 
 def findVersion( ):
     a = {}
@@ -44,6 +54,25 @@ def packagesFor( filename, basePackage="" ):
 
 packages = packagesFor( "simpleparse", 'simpleparse' )
 packages.update( {'simpleparse':'simpleparse'} )
+
+def cython_extension( name, include_dirs = (), ):
+    """Create a cython extension object"""
+    filenames = '%(name)s.c'%locals(), '%(name)s.pyx'%locals()
+    filename = filenames[bool(have_cython)]
+    return Extension(
+        "simpleparse.%(name)s"%locals(),
+        [
+            os.path.join(
+                'src',
+                filename
+            ),
+        ],
+    )
+
+extensions = [
+    cython_extension( '_boyermoore' ),
+]
+print('extensions', [x.name for x in extensions])
 
 options = {
     'sdist': { 'force_manifest':1,'formats':['gztar','zip'] },
@@ -78,6 +107,8 @@ largely deterministic grammars.""",
     else:
         extraArguments = {
         }
+    if have_cython:
+        extra_commands['build_ext'] = build_ext
     setup (
         name = "SimpleParse",
         version = findVersion(),
@@ -89,6 +120,7 @@ largely deterministic grammars.""",
         package_dir = packages,
         options = options,
         cmdclass= extra_commands,
+        ext_modules=extensions,
 
         packages = list(packages.keys()),
         **extraArguments
