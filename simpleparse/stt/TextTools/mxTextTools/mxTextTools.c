@@ -848,56 +848,47 @@ PyObject *mxTextSearch_Repr(mxTextSearchObject *self)
     return PyString_FromString(t);
 }
 
-static 
-PyObject *mxTextSearch_GetAttr(mxTextSearchObject *self,
-			char *name)
-{
-    PyObject *v;
-    
-    if (Py_WantAttr(name,"match")) {
-	v = self->match;
-	Py_INCREF(v);
-	return v;
-    }
-    else if (Py_WantAttr(name,"translate")) {
-        v = self->translate;
-	if (v == NULL)
-	    v = Py_None;
-	Py_INCREF(v);
-	return v;
-    }
-    else if (Py_WantAttr(name,"algorithm"))
-        return PyInt_FromLong(self->algorithm);
-    else if (Py_WantAttr(name,"__members__"))
-	return Py_BuildValue("[sss]",
-			     "match", "translate", "algorithm");
-    
-    return Py_FindMethod(mxTextSearch_Methods, (PyObject *)self, (char *)name);
-}
+static PyMemberDef mxTextSearch_members[] = {
+    {"match",T_OBJECT_EX,offsetof(mxTextSearchObject,match),READONLY,"Text that this search matches"},
+    {"translate",T_OBJECT_EX,offsetof(mxTextSearchObject,translate),READONLY,"Translated search term"},
+    {"algorithm",T_INT,offsetof(mxTextSearchObject,algorithm),READONLY,"Algorithm in use by the text search"},
+    {NULL}
+};
 
 /* Python Type Table */
 
 PyTypeObject mxTextSearch_Type = {
-        PyObject_HEAD_INIT(0)		/* init at startup ! */
+    PyVarObject_HEAD_INIT(NULL, 0)		/* init at startup ! */
 	0,			  	/*ob_size*/
 	"TextSearch",		  	/*tp_name*/
 	sizeof(mxTextSearchObject),	/*tp_basicsize*/
 	0,			  	/*tp_itemsize*/
 	/* methods */
 	(destructor)mxTextSearch_Free,	/*tp_dealloc*/
-	(printfunc)0,			/*tp_print*/
-	(getattrfunc)mxTextSearch_GetAttr,  	/*tp_getattr*/
-	(setattrfunc)0,		  	/*tp_setattr*/
-	(cmpfunc)0,		  	/*tp_compare*/
+	0,			/*tp_print*/
+	0,  	/*tp_getattr*/
+	0,		  	/*tp_setattr*/
+	0,		  	/*tp_compare*/
 	(reprfunc)mxTextSearch_Repr,  	/*tp_repr*/
-        0,			  	/*tp_as_number*/
+    0,			  	/*tp_as_number*/
 	0,				/*tp_as_number*/
 	0,				/*tp_as_mapping*/
-	(hashfunc)0,			/*tp_hash*/
-	(ternaryfunc)0,			/*tp_call*/
-	(reprfunc)0,			/*tp_str*/
-	(getattrofunc)0, 		/*tp_getattro*/
-	(setattrofunc)0, 		/*tp_setattro*/
+	0,			/*tp_hash*/
+	0,			/*tp_call*/
+	0,			/*tp_str*/
+	0, 		/*tp_getattro*/
+	0, 		/*tp_setattro*/
+    0,      /*tp_asbuffer*/
+    Py_TPFLAGS_DEFAULT,      /*tp_flags*/
+    "mxTextTools text-search object",      /*tp_doc*/
+    0,      /*tp_traverse*/
+    0,      /*tp_clear*/
+    0,      /*tp_richcompare*/
+    0,      /*tp_weaklistoffset*/
+    0,      /*tp_iter*/
+    0,      /*tp_iternext*/
+    0,      /*tp_methods*/
+    mxTextSearch_members, /*tp_members*/
 };
 
 /* Python Method Table */
@@ -2055,29 +2046,29 @@ PySequenceMethods mxCharSet_TypeAsSequence = {
 };
 
 PyTypeObject mxCharSet_Type = {
-        PyObject_HEAD_INIT(0)		/* init at startup ! */
+    PyVarObject_HEAD_INIT(NULL, 0)		/* init at startup ! */
 	0,			  	/* ob_size */
 	"Character Set",	  	/* tp_name */
 	sizeof(mxCharSetObject),	/* tp_basicsize */
 	0,			  	/* tp_itemsize */
 	/* methods */
 	(destructor)mxCharSet_Free,	/* tp_dealloc */
-	(printfunc)0,			/* tp_print */
+	0,			/* tp_print */
 	(getattrfunc)mxCharSet_GetAttr, /* tp_getattr */
-	(setattrfunc)0,		  	/* tp_setattr */
-	(cmpfunc)0,		  	/* tp_compare */
+	0,		  	/* tp_setattr */
+	0,		  	/* tp_compare */
 	(reprfunc)mxCharSet_Repr,  	/* tp_repr */
-        0,			  	/* tp_as_number */
-        &mxCharSet_TypeAsSequence,	/* tp_as_sequence */
+    0,			  	/* tp_as_number */
+    &mxCharSet_TypeAsSequence,	/* tp_as_sequence */
 	0,				/* tp_as_mapping */
-	(hashfunc)0,			/* tp_hash */
-	(ternaryfunc)0,			/* tp_call */
-	(reprfunc)0,			/* tp_str */
-	(getattrofunc)0, 		/* tp_getattro */
-	(setattrofunc)0, 		/* tp_setattro */
-        0,				/* tp_as_buffer */
-        Py_TPFLAGS_DEFAULT,		/* tp_flags */
-        (char*) 0,			/* tp_doc */
+	0,			/* tp_hash */
+	0,			/* tp_call */
+	0,			/* tp_str */
+	0, 		/* tp_getattro */
+	0, 		/* tp_setattro */
+    0,				/* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,		/* tp_flags */
+    "Character set",			/* tp_doc */
 };
 
 /* Python Method Table */
@@ -2888,29 +2879,29 @@ PyObject *mxTagTable_GetAttr(mxTagTableObject *self,
 /* Python Type Tables */
 
 PyTypeObject mxTagTable_Type = {
-        PyObject_HEAD_INIT(0)		/* init at startup ! */
+    PyVarObject_HEAD_INIT(NULL, 0)		/* init at startup ! */
 	0,			  	/* ob_size */
 	"Tag Table",		  	/* tp_name */
 	sizeof(mxTagTableObject),	/* tp_basicsize */
 	sizeof(mxTagTableEntry),  	/* tp_itemsize */
 	/* methods */
 	(destructor)mxTagTable_Free,	/* tp_dealloc */
-	(printfunc)0,			/* tp_print */
+	0,			/* tp_print */
 	(getattrfunc)mxTagTable_GetAttr, /* tp_getattr */
-	(setattrfunc)0,		  	/* tp_setattr */
-	(cmpfunc)0,		  	/* tp_compare */
+	0,		  	/* tp_setattr */
+	0,		  	/* tp_compare */
 	(reprfunc)mxTagTable_Repr,  	/* tp_repr */
-        0,			  	/* tp_as_number */
-        0,				/* tp_as_sequence */
+    0,			  	/* tp_as_number */
+    0,				/* tp_as_sequence */
 	0,				/* tp_as_mapping */
-	(hashfunc)0,			/* tp_hash */
-	(ternaryfunc)0,			/* tp_call */
-	(reprfunc)0,			/* tp_str */
-	(getattrofunc)0, 		/* tp_getattro */
-	(setattrofunc)0, 		/* tp_setattro */
-        0,				/* tp_as_buffer */
-        Py_TPFLAGS_DEFAULT,		/* tp_flags */
-        (char*) 0,			/* tp_doc */
+	0,			/* tp_hash */
+	0,			/* tp_call */
+	0,			/* tp_str */
+	0, 		/* tp_getattro */
+	0, 		/* tp_setattro */
+    0,				/* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,		/* tp_flags */
+    0,			/* tp_doc */
 };
 
 /* Python Method Table */
@@ -4693,6 +4684,8 @@ Py_C_Function( mxTextTools_cmp,
 {
     PyObject *v,*w;
     int cmp;
+    short index;
+    
 
     Py_Get2Args("OO:cmp",v,w);
 
@@ -4701,11 +4694,18 @@ Py_C_Function( mxTextTools_cmp,
 	      PyExc_TypeError,
 	      "invalid taglist-tuple");
 
-    cmp = PyObject_Compare(PyTuple_GET_ITEM(v,1),PyTuple_GET_ITEM(w,1));
-    if (cmp != 0) 
-	return PyInt_FromLong(cmp);
-    cmp = - PyObject_Compare(PyTuple_GET_ITEM(v,2),PyTuple_GET_ITEM(w,2));
-    return PyInt_FromLong(cmp);
+    
+    for (index=1; index < 3; index++) {
+        cmp = PyObject_RichCompareBool(PyTuple_GET_ITEM(v,index),PyTuple_GET_ITEM(w,index),Py_LT);
+        if (cmp) {
+            return PyInt_FromLong(-1);
+        }
+        cmp = PyObject_RichCompareBool(PyTuple_GET_ITEM(v,index),PyTuple_GET_ITEM(w,index),Py_GT);
+        if (cmp) {
+            return PyInt_FromLong(1);
+        }
+    }
+    return PyInt_FromLong(0);
 
  onError:
     return NULL;
@@ -5142,7 +5142,10 @@ MX_EXPORT(void)
 		 "can't initialize "MXTEXTTOOLS_MODULE" more than once");
 
     /* Init type objects */
-    PyType_Init(mxTextSearch_Type);
+    mxTextSearch_Type.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&mxTextSearch_Type) < 0)
+        return;
+    // PyType_Init(mxTextSearch_Type);
 #ifdef MXFASTSEARCH
     PyType_Init(mxFS_Type);
 #endif

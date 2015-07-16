@@ -1,3 +1,5 @@
+#include "mcfpyapi.h"
+
 #ifndef MXTEXTTOOLS_H
 #define MXTEXTTOOLS_H
 /* 
@@ -47,7 +49,7 @@ typedef struct {
 MXTEXTTOOLS_EXTERNALIZE(PyTypeObject) mxTextSearch_Type;
 
 #define mxTextSearch_Check(v) \
-        (((mxTextSearchObject *)(v))->ob_type == &mxTextSearch_Type)
+        (Py_TYPE(((mxTextSearchObject *)(v))) == &mxTextSearch_Type)
 
 /* Exporting these APIs for mxTextTools internal use only ! */
 
@@ -93,7 +95,7 @@ typedef struct {
 MXTEXTTOOLS_EXTERNALIZE(PyTypeObject) mxCharSet_Type;
 
 #define mxCharSet_Check(v) \
-        (((mxCharSetObject *)(v))->ob_type == &mxCharSet_Type)
+        (Py_TYPE(((mxCharSetObject *)(v))) == &mxCharSet_Type)
 
 
 /* Exporting these APIs for mxTextTools internal use only ! */
@@ -147,7 +149,7 @@ typedef struct {
 MXTEXTTOOLS_EXTERNALIZE(PyTypeObject) mxTagTable_Type;
 
 #define mxTagTable_Check(v) \
-        (((mxTagTableObject *)(v))->ob_type == &mxTagTable_Type)
+        (Py_TYPE(((mxTagTableObject *)(v))) == &mxTagTable_Type)
 
 #define mxTagTable_Type(v) \
 	(((mxTagTableObject *)(v))->tabletype)
