@@ -31,13 +31,6 @@ class BaseTests( object ):
         index = self.b_class( b'moomoomoo' ).search( text )
         assert index == len(base)*50000, index
 
-    def test_re(self):
-        import re
-        r = re.compile( b'moomoomoo' )
-        base = b'this is the world and the world is quite large'
-        text = base * 50000 + b'moomoomoo'
-        result = r.search( text )
-        assert result
 class BMTests(BaseTests, TestCase):
     b_class = BoyerMoore
     def test_ints(self):

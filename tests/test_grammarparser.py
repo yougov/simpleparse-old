@@ -1,11 +1,10 @@
 """Tests that simpleparsegrammar does parse SimpleParse grammars
 """
-
-import unittest, pprint
+import unittest
 from simpleparse.simpleparsegrammar import SPGenerator, declaration
 from simpleparse.parser import Parser
-from simpleparse.error import ParserSyntaxError
-from genericvalues import NullResult, AnyInt
+#from simpleparse.error import ParserSyntaxError
+from .genericvalues import NullResult, AnyInt
 
 
 class SimpleParseGrammarTests(unittest.TestCase):
